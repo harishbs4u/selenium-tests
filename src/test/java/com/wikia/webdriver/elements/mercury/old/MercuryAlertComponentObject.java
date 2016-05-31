@@ -10,10 +10,12 @@ public class MercuryAlertComponentObject {
   private Wait wait;
   private String alertMessage;
   private By alertBox = By.cssSelector(".alert-notifications .alert-box");
+  private WebDriver driver;
 
   public MercuryAlertComponentObject(WebDriver driver, AlertMessage message) {
     this.wait = new Wait(driver);
     this.alertMessage = message.getMessage();
+    this.driver = driver;
 
     PageFactory.initElements(driver, this);
   }
@@ -41,5 +43,9 @@ public class MercuryAlertComponentObject {
 
   public boolean isAlertMessageVisible() {
     return wait.forTextInElement(alertBox, alertMessage);
+  }
+
+  public String getMessage() {
+    return driver.findElement(alertBox).getText();
   }
 }

@@ -128,7 +128,7 @@ public class NavigationTests extends NewTestTemplate {
     UrlChecker.isPathContainedInCurrentUrl(driver, MercuryPaths.ROOT_ARTICLE_PATH);
   }
 
-  @Test(groups = "MercuryCuratedNavigationTest_004")
+  @Test(groups = "MercuryCuratedNavigationTest_004", invocationCount = 10)
   public void MercuryCuratedNavigationTest_004_navigateThroughDifferentUrl() {
     init();
 
@@ -147,12 +147,18 @@ public class NavigationTests extends NewTestTemplate {
     loading.handleAsyncPageReload();
     mercuryError.setAlertMessage(MercuryAlertComponentObject.AlertMessage.NOT_EXISTING_CATEGORY);
     Assertion.assertTrue(mercuryError.isAlertMessageVisible());
+    System.out.println("*********************");
+    System.out.println(mercuryError.getMessage());
+    System.out.println("*********************");
     Assertion.assertTrue(driver.getCurrentUrl().contains(expectedUrl));
 
     expectedUrl = UrlBuilder.getUrlForPage(MercurySubpages.CC_MAIN_PAGE);
     navigate.toPage(MercurySubpages.CC_NOT_EXISTING_SECTION);
     loading.handleAsyncPageReload();
     mercuryError.setAlertMessage(MercuryAlertComponentObject.AlertMessage.NOT_EXISTING_SECTION);
+    System.out.println("*********************");
+    System.out.println(mercuryError.getMessage());
+    System.out.println("*********************");
     Assertion.assertTrue(mercuryError.isAlertMessageVisible());
     Assertion.assertTrue(driver.getCurrentUrl().contains(expectedUrl));
   }

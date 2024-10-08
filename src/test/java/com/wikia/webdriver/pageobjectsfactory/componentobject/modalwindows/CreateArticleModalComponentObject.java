@@ -1,7 +1,7 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.modalwindows;
 
 import com.wikia.webdriver.common.contentpatterns.PageContent;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
 import org.openqa.selenium.TimeoutException;
@@ -26,6 +26,8 @@ public class CreateArticleModalComponentObject extends WikiBasePageObject {
   private WebElement phalanxBlockMessageContainer;
   @FindBy(css = "button[data-event=create]")
   private WebElement addAPageButton;
+  @FindBy(css = "#CreatePageModalDialog .close")
+  private WebElement closeButton;
 
   public CreateArticleModalComponentObject(WebDriver driver) {
     super();
@@ -42,32 +44,19 @@ public class CreateArticleModalComponentObject extends WikiBasePageObject {
     chooseLayout(layout);
     wait.forElementVisible(createPageButton);
     scrollAndClick(createPageButton);
-    PageObjectLogging.log(
-        "PageCreated",
-        "Page with given title created",
-        true
-    );
+    Log.log("PageCreated", "Page with given title created", true);
   }
 
   public void verifyMessageAboutBlockPresent() {
     wait.forElementVisible(phalanxBlockMessageContainer);
-    wait.forTextInElement(
-        phalanxBlockMessageContainer, PageContent.PHALANX_BLOCK_TITLE_MESSAGE
-    );
-    PageObjectLogging.log(
-        "MessageAboutBlockPresent",
-        "Message about block present",
-        true,
-        driver
-    );
+    wait.forTextInElement(phalanxBlockMessageContainer, PageContent.PHALANX_BLOCK_TITLE_MESSAGE);
+    Log.log("MessageAboutBlockPresent", "Message about block present", true, driver);
   }
 
   /**
-   * Checks layout's radiobutton accroding to layout type given as param Layout can have values:
+   * Checks layout's radiobutton accroding to layout type given as param layout can have values:
    * standard - layout with video and image placeholders top - layout for top10List page blank -
    * blank page's layout
-   *
-   * @param layout
    */
   private void chooseLayout(String layout) {
     if ("standard".equals(layout)) {
@@ -91,9 +80,12 @@ public class CreateArticleModalComponentObject extends WikiBasePageObject {
       wait.forElementVisible(addAPageButton);
       return true;
     } catch (TimeoutException e) {
-      PageObjectLogging.logInfo(e.getMessage());
+      Log.info(e.getMessage());
       return false;
     }
   }
 
+  public void close() {
+    wait.forElementClickable(closeButton).click();
+  }
 }

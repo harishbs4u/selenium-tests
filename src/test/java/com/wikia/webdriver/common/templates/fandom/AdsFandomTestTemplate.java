@@ -2,49 +2,63 @@ package com.wikia.webdriver.common.templates.fandom;
 
 import com.wikia.webdriver.pageobjectsfactory.pageobject.adsbase.AdsFandomObject;
 
+import org.openqa.selenium.Dimension;
+
 public class AdsFandomTestTemplate extends FandomTestTemplate {
 
-  public static final String PAGE_TYPE_ARTICLE = "article";
-  public static final String PAGE_TYPE_HUB = "hub";
+  public static final String PAGE_TYPE_ARTICLE = "f2/article";
+  public static final String PAGE_TYPE_TOPIC = "topic";
+  public static final String PAGE_TYPE_VIDEO_PAGE = "video";
 
   @Override
   protected void loadFirstPage() {
     // we want to avoid going to qa.fandom.com as logged in user
   }
 
+  protected AdsFandomObject loadArticle(String pageName) {
+    return loadPage(pageName, AdsFandomTestTemplate.PAGE_TYPE_ARTICLE);
+  }
+
+  protected AdsFandomObject loadTopic(String pageName) {
+    return loadPage(pageName, AdsFandomTestTemplate.PAGE_TYPE_TOPIC);
+  }
+
+  protected AdsFandomObject loadVideoPage(String pageName) {
+    return loadPage(pageName, AdsFandomTestTemplate.PAGE_TYPE_VIDEO_PAGE);
+  }
+
   protected AdsFandomObject loadPage(String pageName, String pageType) {
+    String pageUrl = getFandomUrl(pageName, pageType);
+
+    return new AdsFandomObject(driver, pageUrl);
+  }
+
+  protected AdsFandomObject loadPage(String pageName, String pageType, Dimension resolution) {
+    String pageUrl = getFandomUrl(pageName, pageType);
+
+    return new AdsFandomObject(driver, pageUrl, resolution);
+  }
+
+  public String getFandomUrl(String pageName, String pageType) {
     String pageUrl;
 
     switch (pageType) {
-      case PAGE_TYPE_HUB:
-        pageUrl = urlBuilder.getUrlForFandomHub(pageName);
+      case PAGE_TYPE_VIDEO_PAGE:
+        pageUrl = urlBuilder.getUrlForFandomVideoPage(pageName);
+        break;
+      case PAGE_TYPE_TOPIC:
+        pageUrl = urlBuilder.getUrlForFandomTopic(pageName);
         break;
       case PAGE_TYPE_ARTICLE:
       default:
-        pageUrl = urlBuilder.getUrlForFandomPage(pageName);
+        pageUrl = urlBuilder.getUrlForFandomArticlePage(pageName);
         break;
     }
 
-    AdsFandomObject pageObject = new AdsFandomObject(driver, pageUrl);
-    getJquery();
-
-    return pageObject;
+    return pageUrl;
   }
 
   protected AdsFandomObject loadPage(String pageName) {
     return loadPage(pageName, PAGE_TYPE_ARTICLE);
-  }
-
-  private void getJquery() {
-    driver.executeScript(
-        "    (function () {\n"
-        + "    var s = document.createElement('script');\n"
-        + "    s.type = 'text/javascript';\n"
-        + "    s.async = true;\n"
-        + "    s.src = 'https://code.jquery.com/jquery-2.2.4.min.js';\n"
-        + "    var x = document.getElementsByTagName('script')[0];\n"
-        + "    x.parentNode.insertBefore(s, x);\n"
-        + "    })();"
-    );
   }
 }

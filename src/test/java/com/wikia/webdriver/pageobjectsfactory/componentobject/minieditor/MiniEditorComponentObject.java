@@ -1,16 +1,13 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.minieditor;
 
 import com.wikia.webdriver.common.contentpatterns.VideoContent;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.photo.PhotoAddComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.vet.VetAddVideoComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.vet.VetOptionsComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 
@@ -34,7 +31,7 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
   private WebElement addVideoButton;
   @FindBy(css = "img.video.thumb")
   private WebElement videoInMessageEditMode;
-  @FindBy(css = ".cke_toolbar_formatmini span.cke_button.cke_button_link a .cke_icon")
+  @FindBy(css = "a.cke_button__link")
   private WebElement addLinkButton;
   @FindBy(css = "input[value='ext']")
   private WebElement externalLinkOption;
@@ -61,7 +58,7 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
     try {
       Thread.sleep(500);
     } catch (InterruptedException e) {
-      PageObjectLogging.log("writeMiniEditor", e, false);
+      Log.log("writeMiniEditor", e, false);
     }
     messageBodyField.clear();
     messageBodyField.sendKeys(text);
@@ -79,27 +76,13 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
     messageBodyField.sendKeys(text);
   }
 
-  public void writeStylesMiniEditor(String message, String special) {
-    String specialKey = "Not Initialized";
-    if ("Bold".equals(special)) {
-      specialKey = "b";
-    }
-    if ("Italic".equals(special)) {
-      specialKey = "i";
-    }
-    wait.forElementVisible(messageBodyField);
-    messageBodyField.sendKeys(message);
-    messageBodyField.sendKeys(Keys.LEFT_CONTROL + "a");
-    messageBodyField.sendKeys(Keys.LEFT_CONTROL + specialKey);
-  }
-
-  public void addVideoMiniEditor(String url) {
+  public void addVideoMiniEditor() {
     wait.forElementClickable(addVideoButton);
     scrollAndClick(addVideoButton);
     VetAddVideoComponentObject vetAddingVideo = new VetAddVideoComponentObject(driver);
     VetOptionsComponentObject
-        vetOptions =
-        vetAddingVideo.addVideoByUrl(VideoContent.YOUTUBE_VIDEO_URL);
+        vetOptions
+        = vetAddingVideo.addVideoByUrl(VideoContent.YOUTUBE_VIDEO_URL);
     vetOptions.submit();
     verifyVideoMiniEditor();
   }
@@ -112,7 +95,7 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
   }
 
   public void addExternalLink(String externalLink) {
-    wait.forElementVisible(addLinkButton);
+    wait.forElementClickable(addLinkButton);
     scrollAndClick(addLinkButton);
     wait.forElementVisible(externalLinkOption);
     scrollAndClick(externalLinkOption);
@@ -122,7 +105,7 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
   }
 
   public void addInternalLink(String internalLink) {
-    wait.forElementVisible(addLinkButton);
+    wait.forElementClickable(addLinkButton);
     scrollAndClick(addLinkButton);
     wait.forElementVisible(targetPageOrURL);
     targetPageOrURL.sendKeys(internalLink);
@@ -150,7 +133,7 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
     wait.forElementVisible(messageBodyField);
     messageBodyField.clear();
     messageBodyField.sendKeys(comment);
-    PageObjectLogging.log("CommentEdited", "Comment edited", true);
+    Log.log("CommentEdited", "Comment edited", true);
   }
 
   public void switchAndReplyComment(String reply) {
@@ -159,7 +142,7 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
     wait.forElementVisible(messageBodyField);
     messageBodyField.clear();
     messageBodyField.sendKeys(reply);
-    PageObjectLogging.log("CommentReplied", "Comment replied", true);
+    Log.log("CommentReplied", "Comment replied", true);
   }
 
   public void switchAndEditMessageWall(String reply) {
@@ -167,7 +150,7 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
     driver.switchTo().frame(editMessageWallFrame);
     messageBodyField.clear();
     messageBodyField.sendKeys(reply);
-    PageObjectLogging.log("switchAndEditMessageWall", "message edited", true);
+    Log.log("switchAndEditMessageWall", "message edited", true);
   }
 
   public void switchAndQuoteMessageWall(String reply) {
@@ -177,6 +160,6 @@ public class MiniEditorComponentObject extends WikiBasePageObject {
     WebElement quoteMessageTextArea = driver.findElement(By.cssSelector("body#bodyContent"));
     quoteMessageTextArea.clear();
     quoteMessageTextArea.sendKeys(reply);
-    PageObjectLogging.log("switchAndQuoteMessageWall", "quote typed", true);
+    Log.log("switchAndQuoteMessageWall", "quote typed", true);
   }
 }

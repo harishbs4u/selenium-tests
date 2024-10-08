@@ -1,16 +1,14 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.special;
 
-import static org.apache.commons.lang.StringEscapeUtils.escapeHtml;
-
 import com.wikia.webdriver.common.contentpatterns.URLsContent;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.core.Assertion;
+import com.wikia.webdriver.common.logging.Log;
+import com.wikia.webdriver.elements.communities.desktop.components.video.VideoTile;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.lightbox.LightboxComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.vet.VetAddVideoComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.special.watch.WatchPageObject;
 
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.FindBys;
 import org.openqa.selenium.support.PageFactory;
@@ -18,12 +16,15 @@ import org.openqa.selenium.support.PageFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class SpecialVideosPageObject extends SpecialPageObject {
 
-  @FindBy(css = ".WikiaPageHeader h1")
+  private static final String LONG_TITLE_SUFFIX = " ...";
+  private static final String NEWEST_VIDEO_CSS = ".special-videos-grid li:nth-child(1) .title a";
+  @FindBy(css = ".page-header__title")
   private WebElement h1Header;
-  @FindBy(css = "a.button.addVideo")
+  @FindBy(css = "a.addVideo")
   private WebElement addVideo;
   @FindBy(css = ".special-videos-grid li:nth-child(1)")
   private WebElement newestVideo;
@@ -39,8 +40,8 @@ public class SpecialVideosPageObject extends SpecialPageObject {
   private WebElement deleteConfirmButton;
   @FindBy(css = "#sorting-dropdown")
   private WebElement sortDropdown;
-
-  private static final String NEWEST_VIDEO_CSS = ".special-videos-grid li:nth-child(1) .title a";
+  @FindBy(css = ".special-videos-grid > li")
+  private List<WebElement> videoTileElements;
 
   public SpecialVideosPageObject(WebDriver driver) {
     super();
@@ -59,20 +60,48 @@ public class SpecialVideosPageObject extends SpecialPageObject {
 
   public WatchPageObject unfollowVideo(String wikiURL, String videoName) {
     getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.FILE_NAMESPACE + videoName
-        + "?action=unwatch");
-    return new WatchPageObject(driver);
+           + "?action=unwatch");
+    return new WatchPageObject();
   }
 
-  public VetAddVideoComponentObject clickAddAVideo() {
+  public SpecialVideosPageObject clickAddButton() {
     wait.forElementClickable(addVideo);
     scrollAndClick(addVideo);
+    return this;
+  }
+
+  public VetAddVideoComponentObject addAVideo() {
+    clickAddButton();
     return new VetAddVideoComponentObject(driver);
   }
 
-  public void verifyVideoAdded(String videoTitle) {
-    waitForValueToBePresentInElementsAttributeByCss(NEWEST_VIDEO_CSS, "title", escapeHtml(videoTitle));
-    PageObjectLogging.log("verifyVideoAdded",
-        "verify that video with following description was added: " + videoTitle, true);
+  public List<VideoTile> getVideoTiles(int numberOfTiles) {
+    wait.forElementPresent(By.cssSelector(NEWEST_VIDEO_CSS));
+    List<VideoTile> videoTileList = new ArrayList<>();
+    //numberOfTilesToFetch set to max number of possible elements to fetch
+    int numberOfTilesToFetch = numberOfTiles > videoTileElements.size() ? videoTileElements.size()
+                                                                        : numberOfTiles;
+    List<WebElement> subList = videoTileElements.subList(0, numberOfTilesToFetch);
+    for (WebElement videoTileElement : subList) {
+      VideoTile notification = new VideoTile(videoTileElement);
+      videoTileList.add(notification);
+    }
+    return videoTileList;
+  }
+
+  public void verifyVideoAdded(String expectedVideoTitle) {
+
+    List<String> patternList = getVideoTiles(2).stream()
+        .map(v -> v.getTitle().endsWith(LONG_TITLE_SUFFIX) ? v.getTitle()
+            .replace(LONG_TITLE_SUFFIX, "") : v.getTitle())
+        .collect(Collectors.toList());
+
+    Log.log(
+        "verifyVideoAdded",
+        "verify that video with following description was added: " + expectedVideoTitle,
+        true
+    );
+    Assertion.assertStringContainsAnyPattern(expectedVideoTitle, patternList);
   }
 
   public LightboxComponentObject openLightboxForGridVideo(int itemNumber) {
@@ -81,18 +110,28 @@ public class SpecialVideosPageObject extends SpecialPageObject {
   }
 
   public String getNewestVideoTitle() {
-    wait.forElementVisible(newestVideo);
     return newestVideoTitle.getText();
   }
 
   public void deleteNewestVideo() {
-    openSpecialVideoPageMostRecent(getWikiUrl());
-    wait.forElementVisible(newestVideoTitle);
-    jsActions.execute("$('.special-videos-grid .remove').first().show()");
-    wait.forElementVisible(newestVideo);
+    String videoTitle = getNewestVideoTitle();
     newestVideoDeleteIcon.click();
     wait.forElementVisible(deleteConfirmButton);
     deleteConfirmButton.click();
+    Log.log("Delete video", "Deleted video with title [" + videoTitle + "]", true);
+  }
+
+  public boolean isNewVideoAdded() {
+    try {
+      openSpecialVideoPageMostRecent(getWikiUrl());
+      wait.forElementVisible(newestVideoTitle);
+      jsActions.execute("$('.special-videos-grid .remove').first().show()");
+      wait.forElementVisible(newestVideo);
+      return true;
+    } catch (TimeoutException e) {
+      Log.info("Title is not visible", e);
+      return false;
+    }
   }
 
   public boolean isHeaderVisible() {
@@ -100,7 +139,7 @@ public class SpecialVideosPageObject extends SpecialPageObject {
       wait.forElementVisible(h1Header);
       return true;
     } catch (TimeoutException e) {
-      PageObjectLogging.logInfo("Header is not visible", e);
+      Log.info("Header is not visible", e);
       return false;
     }
   }
@@ -110,7 +149,7 @@ public class SpecialVideosPageObject extends SpecialPageObject {
       wait.forElementClickable(addVideo);
       return true;
     } catch (TimeoutException e) {
-      PageObjectLogging.logInfo("Add video button is not clickable", e);
+      Log.info("Add video button is not clickable", e);
       return false;
     }
   }
@@ -120,9 +159,8 @@ public class SpecialVideosPageObject extends SpecialPageObject {
       wait.forElementVisible(newestVideo);
       return true;
     } catch (TimeoutException e) {
-      PageObjectLogging.logInfo("Newest video is not visible", e);
+      Log.info("Newest video is not visible", e);
       return false;
     }
   }
-
 }

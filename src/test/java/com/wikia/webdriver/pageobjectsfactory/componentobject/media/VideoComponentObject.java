@@ -1,7 +1,7 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.media;
 
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
 import org.openqa.selenium.By;
@@ -36,49 +36,32 @@ public class VideoComponentObject extends WikiBasePageObject {
 
   public void verifyVideoEmbedWidth() {
     Assertion.assertEquals(videoEmbed.findElement(By.tagName("div")).getCssValue("width"),
-                           videoWidth + "px");
-    PageObjectLogging.log("verifyVideoEmbedWidth", "Width: " + videoWidth, true);
+                           videoWidth + "px"
+    );
+    Log.log("verifyVideoEmbedWidth", "Width: " + videoWidth, true);
   }
 
   public void verifyVideoIframeWidth() {
     Assertion.assertEquals(videoEmbed.findElement(By.tagName("iframe")).getAttribute("width"),
-                           videoWidth.toString());
-    PageObjectLogging.log("verifyVideoIframeWidth", "Width: " + videoWidth, true);
-  }
-
-  public void verifyVideoOoyalaAgeGate() {
-    String ageGateClass = "ageGate";
-    Assertion.assertTrue(videoEmbed.findElement(By.className(ageGateClass)) != null);
-    PageObjectLogging.log("verifyVideoOoyalaAgeGate", "Age gate module is enabled", true);
-  }
-
-  public void verifyVideoOoyalaEmbed() {
-    WebElement container = videoEmbed.findElement(By.tagName("div"));
-    String containerId = "ooyalaplayer-";
-    Assertion.assertStringContains(container.getAttribute("id"), containerId);
-    wait.forElementVisible(container.findElement(By.cssSelector("[id^='ooyalaplayer-']>.innerWrapper")));
-    PageObjectLogging.log("verifyVideoOoyalaEmbed", "Ooyala video is embedded", true);
+                           videoWidth.toString()
+    );
+    Log.log("verifyVideoIframeWidth", "Width: " + videoWidth, true);
   }
 
   public void verifyFlashVideoObjectVisible() {
     wait.forElementVisible(videoEmbed.findElement(By.cssSelector("object")));
-    PageObjectLogging.log("verifyFlashVideoObjectVisible", "Video object is visible", true);
-  }
-
-  public void verifyVideoObjectVisible() {
-    wait.forElementVisible(videoEmbed.findElement(By.cssSelector("[id^='ooyalaplayer-']>.innerWrapper")));
-    PageObjectLogging.log("verifyVideoObjectVisible", "Video object is visible", true);
+    Log.log("verifyFlashVideoObjectVisible", "Video object is visible", true);
   }
 
   public void verifyVideoIframeVisible() {
     wait.forElementVisible(videoEmbed.findElement(By.tagName("iframe")));
-    PageObjectLogging.log("verifyVideoIframeVisible", "Video iframe is visible", true);
+    Log.log("verifyVideoIframeVisible", "Video iframe is visible", true);
   }
 
   public void verifyVideoIgnEmbed() {
-    String iframeSrc = "http://widgets.ign.com/video/embed/content.html?url=";
+    String iframeSrc = "https://widgets.ign.com/video/embed/content.html?url=";
     Assertion.assertStringContains(getVideoPlayerIframe().getAttribute("src"), iframeSrc);
-    PageObjectLogging.log("verifyVideoIgnEmbed", "IGN video is embedded", true);
+    Log.log("verifyVideoIgnEmbed", "IGN video is embedded", true);
   }
 
   public void verifyVideoAnyclipEmbed() {
@@ -88,13 +71,14 @@ public class VideoComponentObject extends WikiBasePageObject {
 
     WebElement object = container.findElement(By.tagName("object"));
     wait.forElementVisible(object);
-    Assertion.assertStringContains(getVideoPlayerObject().getAttribute("value"), object.getAttribute("id")
+    Assertion.assertStringContains(getVideoPlayerObject().getAttribute("value"),
+                                   object.getAttribute("id")
     );
-    PageObjectLogging.log("verifyVideoAnyclipEmbed", "Anyclip video is embedded", true);
+    Log.log("verifyVideoAnyclipEmbed", "Anyclip video is embedded", true);
   }
 
   public void verifyVideoAutoplay(String providerName, boolean status) {
-    PageObjectLogging.log("verifyVideoAutoplay", "Provider: " + providerName, true);
+    Log.log("verifyVideoPlay", "Provider: " + providerName, true);
 
     String autoplayStr = "";
     String embedCode = "";
@@ -143,5 +127,4 @@ public class VideoComponentObject extends WikiBasePageObject {
 
     Assertion.assertStringContains(embedCode, autoplayStr);
   }
-
 }

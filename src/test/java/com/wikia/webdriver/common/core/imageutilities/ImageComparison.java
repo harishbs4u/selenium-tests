@@ -1,6 +1,6 @@
 package com.wikia.webdriver.common.core.imageutilities;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.WebDriverException;
@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * Class containing methods responsible for comparing images using different algorithms.
@@ -37,16 +38,32 @@ public class ImageComparison {
     return Arrays.equals(fileInBytes1, fileInBytes2);
   }
 
-  /**
-   * Compare two files byte length in specific accuracy
-   *
-   * @param accuracy use value between 0.0 and 1.0 i.e 0.98 for 98% accuracy
-   * @return boolean
-   */
-  public boolean areFilesTheSame(File file1, File file2, double accuracy) {
-    double difference = (double) file1.length() / file2.length();
-    return (difference >= accuracy && difference <= 1.0) || (difference >= 1.0
-                                                             && difference <= 2.0 - accuracy);
+  public Color getMostFrequentColor(BufferedImage image) {
+    final HashMap<Integer, Integer> colorFreq = new HashMap<>();
+
+    for (int x = 0; x < image.getWidth(); x++) {
+      for (int y = 0; y < image.getHeight(); y++) {
+        int pixelColor = image.getRGB(x, y);
+        if (colorFreq.get(pixelColor) == null) {
+          colorFreq.put(pixelColor, 0);
+        }
+        colorFreq.put(pixelColor, colorFreq.get(pixelColor) + 1);
+      }
+    }
+
+    HashMap.Entry<Integer, Integer> mostFrequentEntry = null;
+    for (HashMap.Entry<Integer, Integer> entry : colorFreq.entrySet()) {
+      if (mostFrequentEntry == null
+          || entry.getValue().compareTo(mostFrequentEntry.getValue()) > 0) {
+        mostFrequentEntry = entry;
+      }
+    }
+
+    final Color color = new Color(mostFrequentEntry.getKey());
+
+    Log.log("Most frequent color", "Image most frequent color is " + color, true);
+
+    return color;
   }
 
   /**
@@ -57,7 +74,7 @@ public class ImageComparison {
     int diffCount = 0;
     for (int x = 0; x < image.getWidth(); x++) {
       for (int y = 0; y < image.getHeight(); y++) {
-        Color pixelColor = new Color(image.getRGB(x,y));
+        Color pixelColor = new Color(image.getRGB(x, y));
         if (!areColorsSimilar(pixelColor, color)) {
           diffCount += 1;
         }
@@ -90,7 +107,7 @@ public class ImageComparison {
   public boolean areImagesDifferent(BufferedImage image1, BufferedImage image2, int threshold) {
     int sameCount = 0;
     if (image1.getHeight() != image2.getHeight() || image1.getWidth() != image2.getWidth()) {
-      PageObjectLogging.logWarning("areImagesDifferent", "Images have different sizes");
+      Log.warning("areImagesDifferent", "Images have different sizes");
       return true;
     }
     int count = image1.getHeight() * image1.getWidth();
@@ -109,7 +126,7 @@ public class ImageComparison {
 
   public boolean areImagesTheSame(BufferedImage image1, BufferedImage image2) {
     if (image1.getHeight() != image2.getHeight() || image1.getWidth() != image2.getWidth()) {
-      PageObjectLogging.logWarning("areImagesTheSame", "Images have different sizes");
+      Log.warning("areImagesTheSame", "Images have different sizes");
       return false;
     }
     for (int x = 0; x < image1.getWidth(); x++) {
@@ -122,10 +139,13 @@ public class ImageComparison {
     return true;
   }
 
-  private boolean areColorsSimilar(Color c1, Color c2) {
-    double distance = Math.pow(c1.getRed() - c2.getRed(), 2) +
-                      Math.pow(c1.getGreen() - c2.getGreen(), 2) +
-                      Math.pow(c1.getBlue() - c2.getBlue(), 2);
-    return Math.sqrt(distance) < ACCEPTABLE_COLOR_DISTANCE;
+  public boolean areColorsSimilar(Color c1, Color c2) {
+    return areColorsSimilar(c1, c2, ACCEPTABLE_COLOR_DISTANCE);
+  }
+
+  public boolean areColorsSimilar(Color c1, Color c2, int acceptableColorDistance) {
+    double distance = Math.pow(c1.getRed() - c2.getRed(), 2) + Math.pow(
+        c1.getGreen() - c2.getGreen(), 2) + Math.pow(c1.getBlue() - c2.getBlue(), 2);
+    return Math.sqrt(distance) < acceptableColorDistance;
   }
 }

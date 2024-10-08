@@ -1,10 +1,10 @@
 package com.wikia.webdriver.elements.fandom.components;
 
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-
 import com.wikia.webdriver.common.core.helpers.FandomUser;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.BasePageObject;
+
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.FindBy;
 
 public class WPLoginBox extends BasePageObject {
 
@@ -15,12 +15,12 @@ public class WPLoginBox extends BasePageObject {
   private WebElement password;
 
   @FindBy(css = "#wp-submit")
-  private WebElement sumbmit;
+  private WebElement submit;
 
   public WPLoginBox login(FandomUser user) {
     username.sendKeys(user.getUsername());
     password.sendKeys(user.getPassword());
-    sumbmit.click();
+    submit.click();
 
     return this;
   }

@@ -1,6 +1,6 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.addtable;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
 import org.apache.commons.lang.StringUtils;
@@ -20,7 +20,7 @@ public class TableBuilderComponentObject extends WikiBasePageObject {
   private WebElement addTableLightbox;
   @FindBy(css = "input.cke_dialog_ui_input_text")
   private List<WebElement> tablePropertiesInputs;
-  @FindBy(css = ".cke_dialog_ui_input_select")
+  @FindBy(css = "select.cke_dialog_ui_input_select")
   private List<WebElement> tablePropertiesDropdownOptions;
 
   public TableBuilderComponentObject(WebDriver driver) {
@@ -34,63 +34,43 @@ public class TableBuilderComponentObject extends WikiBasePageObject {
   public void typeAmountOfRows(int rows) {
     tablePropertiesInputs.get(0).clear();
     tablePropertiesInputs.get(0).sendKeys(Integer.toString(rows));
-    PageObjectLogging.log(
-        "typeAmountOfRows",
-        "amount of rows was typed: " + rows,
-        true
-    );
+    Log.log("typeAmountOfRows", "amount of rows was typed: " + rows, true);
   }
 
   public void typeAmountOfColumns(int columns) {
     tablePropertiesInputs.get(1).clear();
     tablePropertiesInputs.get(1).sendKeys(Integer.toString(columns));
-    PageObjectLogging.log(
-        "typeAmountOfColumns",
-        "amount of columns was typed: " + columns,
-        true
-    );
+    Log.log("typeAmountOfColumns", "amount of columns was typed: " + columns, true);
   }
 
   public void typeBorderSize(int border) {
     tablePropertiesInputs.get(2).clear();
     tablePropertiesInputs.get(2).sendKeys(Integer.toString(border));
-    PageObjectLogging.log("typeBorderSize", "border size was typed: " + border, true);
+    Log.log("typeBorderSize", "border size was typed: " + border, true);
   }
 
   public void typeWidth(int width) {
     tablePropertiesInputs.get(3).clear();
     tablePropertiesInputs.get(3).sendKeys(Integer.toString(width));
-    PageObjectLogging.log("typeWidth", "width was typed:" + width, true);
+    Log.log("typeWidth", "width was typed:" + width, true);
   }
 
   public void typeHeight(int height) {
     tablePropertiesInputs.get(4).clear();
     tablePropertiesInputs.get(4).sendKeys(Integer.toString(height));
-    PageObjectLogging.log("typeHeight", "height was typed: " + height, true);
+    Log.log("typeHeight", "height was typed: " + height, true);
   }
 
   public void typeCellSpacing(int cellSpacing) {
     tablePropertiesInputs.get(5).clear();
     tablePropertiesInputs.get(5).sendKeys(Integer.toString(cellSpacing));
-    PageObjectLogging.log(
-        "typeCellSpacing",
-        "cell spacing was typed: " + cellSpacing,
-        true
-    );
+    Log.log("typeCellSpacing", "cell spacing was typed: " + cellSpacing, true);
   }
 
   public void typeCellPadding(int cellPadding) {
     tablePropertiesInputs.get(6).clear();
     tablePropertiesInputs.get(6).sendKeys(Integer.toString(cellPadding));
-    PageObjectLogging.log(
-        "typeCellPadding",
-        "cell padding was typed: " + cellPadding,
-        true, driver
-    );
-  }
-
-  public enum Headers {
-    NONE, FIRSTROW, FIRSTCOLUMN, BOTH
+    Log.log("typeCellPadding", "cell padding was typed: " + cellPadding, true, driver);
   }
 
   public void selectHeader(Headers header) {
@@ -112,21 +92,7 @@ public class TableBuilderComponentObject extends WikiBasePageObject {
       default:
         throw new NoSuchElementException("Non-existing header selected");
     }
-    PageObjectLogging.log("selectHeader", header.toString() + " header selected", true, driver);
-  }
-
-  public enum Alignment {
-    LEFT, CENTER, RIGHT;
-
-    private final String label;
-
-    Alignment() {
-      this.label = StringUtils.capitalize(this.toString().toLowerCase());
-    }
-
-    public String getAlignment() {
-      return this.label;
-    }
+    Log.log("selectHeader", header.toString() + " header selected", true, driver);
   }
 
   public void selectAlignment(Alignment position) {
@@ -145,14 +111,30 @@ public class TableBuilderComponentObject extends WikiBasePageObject {
       default:
         throw new NoSuchElementException("Non-existing alignment selected");
     }
-    PageObjectLogging
-        .log("selectPosition", position.getAlignment() + " position selected", true, driver);
+    Log.log("selectPosition", position.getAlignment() + " position selected", true, driver);
   }
 
   public void submitTable() {
     wait.forElementVisible(submitLightboxButton);
     submitLightboxButton.click();
-    PageObjectLogging.log("submitButton", "Table submited", true);
+    Log.log("submitButton", "Table submited", true);
   }
 
+  public enum Headers {
+    NONE, FIRSTROW, FIRSTCOLUMN, BOTH
+  }
+
+  public enum Alignment {
+    LEFT, CENTER, RIGHT;
+
+    private final String label;
+
+    Alignment() {
+      this.label = StringUtils.capitalize(this.toString().toLowerCase());
+    }
+
+    public String getAlignment() {
+      return this.label;
+    }
+  }
 }

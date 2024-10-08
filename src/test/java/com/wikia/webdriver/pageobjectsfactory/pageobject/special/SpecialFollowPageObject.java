@@ -2,7 +2,7 @@ package com.wikia.webdriver.pageobjectsfactory.pageobject.special;
 
 import com.wikia.webdriver.common.contentpatterns.URLsContent;
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -23,7 +23,7 @@ public class SpecialFollowPageObject extends SpecialPageObject {
   }
 
   public SpecialFollowPageObject open() {
-    getUrl(urlBuilder.getUrlForWiki() + URLsContent.SPECIAL_FOLLOW);
+    getUrl(urlBuilder.getUrlForWikiPage(URLsContent.SPECIAL_FOLLOW));
 
     return this;
   }
@@ -32,8 +32,7 @@ public class SpecialFollowPageObject extends SpecialPageObject {
     wait.forElementVisible(By.xpath(
         "//ul[@id='wikiafollowedpages-special-heading-article']//a[contains(text(), '" + articleName
         + "')]"));
-    PageObjectLogging.log("verifyFollowedArticle",
-                          articleName + "is visible on followed list", true);
+    Log.log("verifyFollowedArticle", articleName + "is visible on followed list", true);
   }
 
   public void verifyFollowedImageVideo(String imageVideo) {
@@ -44,10 +43,10 @@ public class SpecialFollowPageObject extends SpecialPageObject {
         isPresent = true;
       }
     }
-    Assertion.assertTrue(isPresent, "image " + imageVideo
-                                    + " is not present on the following list");
-    PageObjectLogging.log("verifyFollowedImageVideo",
-                          imageVideo + "is visible on followed list", true);
+    Assertion.assertTrue(isPresent,
+                         "image " + imageVideo + " is not present on the following list"
+    );
+    Log.log("verifyFollowedImageVideo", imageVideo + "is visible on followed list", true);
   }
 
   public void verifyFollowedBlog(String userName, String blogTitle) {
@@ -59,15 +58,16 @@ public class SpecialFollowPageObject extends SpecialPageObject {
       }
     }
     Assertion.assertTrue(isPresent, "blog " + blogTitle + " is not present on the following list");
-    PageObjectLogging.log("verifyFollowedBlog",
-                          userName + " blog is visible on followed list", true);
+    Log.log("verifyFollowedBlog", userName + " blog is visible on followed list", true);
   }
 
   public void verifyFollowedBlogPost(String blogPostName) {
     wait.forElementVisible(By.xpath(
         "//ul[@id='wikiafollowedpages-special-heading-blogs']//a[contains(text(), '" + blogPostName
         + "')]"));
-    PageObjectLogging.log("verifyFollowedBlogPost",
-                          blogPostName + " blog post is visible on followed list", true);
+    Log.log("verifyFollowedBlogPost",
+            blogPostName + " blog post is visible on followed list",
+            true
+    );
   }
 }

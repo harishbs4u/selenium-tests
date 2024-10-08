@@ -1,6 +1,6 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.addphoto;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.BasePageObject;
 
 import org.openqa.selenium.By;
@@ -23,8 +23,8 @@ public class AddPhotoComponentObject extends BasePageObject {
   @FindBy(css = "#WikiaPhotoGallerySearchResultsSelect")
   private WebElement selectButton;
 
-  private By galleryDialogPhotosList = By
-      .cssSelector("ul[class='WikiaPhotoGalleryResults'][type='results'] li");
+  private By galleryDialogPhotosList = By.cssSelector(
+      "ul[class='WikiaPhotoGalleryResults'][type='results'] li");
 
   public AddPhotoComponentObject(WebDriver driver) {
     super();
@@ -33,13 +33,13 @@ public class AddPhotoComponentObject extends BasePageObject {
   private void typeSearchQuery(String query) {
     wait.forElementVisible(searchField);
     searchField.sendKeys(query);
-    PageObjectLogging.log("typeSearchQuery", query + " search query typed in", true);
+    Log.log("typeSearchQuery", query + " search query typed in", true);
   }
 
   private void clickSearchButton() {
     wait.forElementVisible(searchButton);
     searchButton.click();
-    PageObjectLogging.log("clickSearchButton", "search button clicked", true);
+    Log.log("clickSearchButton", "search button clicked", true);
   }
 
   public void search(String query) {
@@ -55,15 +55,13 @@ public class AddPhotoComponentObject extends BasePageObject {
       scrollAndClick(list.get(i).findElement(By.cssSelector("[type=checkbox]")));
       photoNames.add(list.get(i).getAttribute("title"));
     }
-    PageObjectLogging.log("CheckGalleryImageInputs", "Check first " + photoNum
-                                                     + " image inputs", true, driver);
+    Log.log("CheckGalleryImageInputs", "Check first " + photoNum + " image inputs", true, driver);
     return photoNames;
   }
-
 
   public void clickSelect() {
     wait.forElementVisible(selectButton);
     selectButton.click();
-    PageObjectLogging.log("clickSelect", "select button clicked", true);
+    Log.log("clickSelect", "select button clicked", true);
   }
 }

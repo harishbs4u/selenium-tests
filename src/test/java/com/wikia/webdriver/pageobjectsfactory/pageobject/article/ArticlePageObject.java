@@ -3,16 +3,13 @@ package com.wikia.webdriver.pageobjectsfactory.pageobject.article;
 import com.wikia.webdriver.common.contentpatterns.URLsContent;
 import com.wikia.webdriver.common.core.Assertion;
 import com.wikia.webdriver.common.core.TestContext;
-import com.wikia.webdriver.common.core.configuration.Configuration;
 import com.wikia.webdriver.common.core.interactions.Typing;
 import com.wikia.webdriver.common.dataprovider.VisualEditorDataProvider.Editor;
 import com.wikia.webdriver.common.dataprovider.VisualEditorDataProvider.Formatting;
-import com.wikia.webdriver.common.dataprovider.VisualEditorDataProvider.Style;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
-import com.wikia.webdriver.elements.oasis.components.comment.ArticleComment;
+import com.wikia.webdriver.common.logging.Log;
+import com.wikia.webdriver.elements.communities.desktop.components.comment.ArticleComment;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.addtable.TableBuilderComponentObject.Alignment;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.editcategory.EditCategoryComponentObject;
-import com.wikia.webdriver.pageobjectsfactory.componentobject.interactivemaps.EmbedMapComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.lightbox.LightboxComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.media.VideoComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.minieditor.MiniEditorComponentObject;
@@ -20,22 +17,15 @@ import com.wikia.webdriver.pageobjectsfactory.componentobject.modalwindows.Creat
 import com.wikia.webdriver.pageobjectsfactory.componentobject.modalwindows.VECreateArticleModalComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.photo.PhotoAddComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.vet.VetAddVideoComponentObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.PortableInfobox;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.actions.DeletePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.article.editmode.SourceEditModePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.article.editmode.VisualEditModePageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.filepage.FilePage;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.special.watch.WatchPageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.visualeditor.VisualEditorPageObject;
 
 import lombok.Getter;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.FindBys;
@@ -44,7 +34,14 @@ import java.util.List;
 
 public class ArticlePageObject extends WikiBasePageObject {
 
-  @FindBy(css = "#WikiaPageHeader h1")
+  private static final String EDIT_BUTTON_SELECTOR = ".article-comm-edit";
+  private static final String DELETE_BUTTON_SELECTOR = ".article-comm-delete";
+  private static final String COMMENT_AUTHOR_LINK = ".edited-by";
+  private static final String REPLY_COMMENT_SELECTOR = ".article-comm-reply";
+  final Integer minInlineVideoSize = 400;
+  @Getter(lazy = true)
+  private final ArticleComment articleComment = new ArticleComment();
+  @FindBy(css = ".page-header__title")
   protected WebElement articleHeader;
   @FindBy(css = "#mw-content-text")
   protected WebElement articleContentContainer;
@@ -52,20 +49,8 @@ public class ArticlePageObject extends WikiBasePageObject {
   protected WebElement pageContentContainer;
   @FindBy(css = "#mw-content-text p")
   protected WebElement articleContent;
-  @FindBy(css = ".wikia-menu-button.contribute, .contribute-button")
-  protected WebElement contributeDropdown;
   @FindBy(css = "#ca-history")
   protected WebElement historyDropdown;
-  @FindBy(css = ".WikiaMenuElement .createpage, ul .createpage")
-  protected WebElement addArticleInDropdown;
-  @FindBy(css = ".wikia-menu-button.contribute a[data-id='edit']")
-  protected WebElement editArticleInDropDown;
-  @FindBy(css = "#wpCreatePageDialogTitle")
-  protected WebElement articleTitleInputModal;
-  @FindBy(css = "#CreatePageModalDialog .primary")
-  protected WebElement submitModal;
-  @FindBy(css = "#ca-edit")
-  protected WebElement editUsingClassicEditor;
   @FindBy(css = "#article-comm")
   protected WebElement commentArea;
   @FindBy(css = "#article-comm-form .loading-indicator")
@@ -76,7 +61,7 @@ public class ArticlePageObject extends WikiBasePageObject {
   protected List<WebElement> articleComments;
   @FindBys(@FindBy(css = ".sub-comments .speech-bubble-message"))
   protected List<WebElement> commentReplies;
-  @FindBys(@FindBy(css = "#WikiaPageHeader .WikiaMenuElement li"))
+  @FindBys(@FindBy(css = ".page-header__contribution-buttons .wds-dropdown__content .wds-list li"))
   protected List<WebElement> editDropdownElements;
   @FindBy(css = "#WikiaArticleComments")
   protected WebElement allCommentsArea;
@@ -112,6 +97,9 @@ public class ArticlePageObject extends WikiBasePageObject {
   protected WebElement videoThumbnailWrapper;
   @FindBy(css = "#mw-content-text .inline-video")
   protected WebElement videoInline;
+  String editCategorySelector = "li[data-name='%categoryName%'] .toolbar .editCategory";
+  String removeCategorySelector = "li[data-name='%categoryName%'] .toolbar .removeCategory";
+  String videoInCommentsSelector = ".speech-bubble-message img[data-video-name*='%videoName%']";
   @FindBy(css = ".wikiaVideoPlaceholder #WikiaImagePlaceholderInner0")
   private WebElement videoAddPlaceholder;
   @FindBy(css = ".wikiaImagePlaceholder #WikiaImagePlaceholderInner0")
@@ -129,15 +117,13 @@ public class ArticlePageObject extends WikiBasePageObject {
   @FindBy(css = "#articleCategories .category.normal .name a")
   private List<WebElement> categoryList;
   @FindBy(css = ".ui-autocomplete")
-  private WebElement categorySuggestionsList;
+  private WebElement categorySuggestionsDialog;
   @FindBy(css = ".category.new")
   private WebElement categoryNew;
   @FindBy(css = "button.save:not([disabled])")
   private WebElement categorySaveButtonEnabled;
   @FindBy(css = "button.save[disabled]")
   private WebElement categorySaveButtonDisabled;
-  @FindBy(css = ".WikiaPageHeader h1")
-  private WebElement articleTitle;
   @FindBy(css = "#WikiWelcomeModal .close")
   private WebElement welcomeLightBoxCloseButton;
   @FindBy(css = "#WikiWelcomeModal h3")
@@ -146,66 +132,58 @@ public class ArticlePageObject extends WikiBasePageObject {
   private List<WebElement> categorySuggestionsListItems;
   @FindBy(css = ".article-table")
   private WebElement table;
-  @FindBy(css = ".WikiHeader > h2 > a")
+  @FindBy(css = ".wds-community-header__sitename a")
   private WebElement wikiNameHeader;
   @FindBy(css = "#mw-content-text img.thumbimage")
   private WebElement thumbnailImageArticle;
-  @FindBy(css = ".wikia-menu-button")
+  @FindBy(css = ".wds-button-group")
   private WebElement articleEditButton;
-  @FindBy(css = "#WikiaPageHeader .chevron")
-  private WebElement openEditDropdown;
-  @FindBy(css = ".view")
-  private WebElement viewEmbedMapButton;
-  @FindBy(css = ".portable-infobox")
-  private PortableInfobox portableInfobox;
-
-  @Getter(lazy = true)
-  private final ArticleComment articleComment = new ArticleComment();
-
-  private static final String EDIT_BUTTON_SELECTOR = ".article-comm-edit";
-  private static final String DELETE_BUTTON_SELECTOR = ".article-comm-delete";
-  private static final String COMMENT_AUTHOR_LINK = ".edited-by";
-  private static final String REPLY_COMMENT_SELECTOR = ".article-comm-reply";
-
-  final Integer minInlineVideoSize = 400;
-
-  String editCategorySelector = "li[data-name='%categoryName%'] .toolbar .editCategory";
-  String removeCategorySelector = "li[data-name='%categoryName%'] .toolbar .removeCategory";
-  String videoInCommentsSelector = ".speech-bubble-message img[data-video-name*='%videoName%']";
-
-  public ArticlePageObject() {
-    super();
-  }
+  @FindBy(css = "[href='#WikiaArticleComments']")
+  private WebElement commentButton;
+  @FindBy(css = ".featured-video")
+  private WebElement featuredVideo;
 
   /**
    * Open article with name that is the following combination: TEST CLASS NAME + TEST METHOD NAME
    */
   public ArticlePageObject open() {
-    getUrl(urlBuilder.getUrlForWiki(Configuration.getWikiName()) + URLsContent.WIKI_DIR
-           + TestContext.getCurrentMethodName());
+    getUrl(urlBuilder.getUrlForWikiPage(TestContext.getCurrentMethodName()));
 
     return this;
   }
 
   public ArticlePageObject open(String articleTitle) {
-    getUrl(urlBuilder.getUrlForWiki(Configuration.getWikiName()) + URLsContent.WIKI_DIR
-           + articleTitle);
+    getUrl(urlBuilder.getUrlForWikiPage(articleTitle));
     return this;
   }
 
-  public String getAtricleTextRaw() {
-    return pageContentContainer.getText();
+  public ArticlePageObject openArticleByPath(String articlePath) {
+    getUrl(String.format("%s/%s", urlBuilder.getUrl(), articlePath));
+    return this;
+  }
 
+  public String getArticleTextRaw() {
+    return pageContentContainer.getText();
+  }
+
+  public String getArticleTitle() {
+    wait.forElementVisible(articleTitle);
+    return articleTitle.getText();
   }
 
   public void verifyArticleTitle(String title) {
-    wait.forElementVisible(articleHeader);
-    Assertion.assertEquals(articleHeader.getText(), title);
+    wait.forElementVisible(articleTitle);
+    Assertion.assertEquals(articleTitle.getText(), title);
   }
 
   public void verifyContent(String content) {
     wait.forElementVisible(articleContent);
     Assertion.assertStringContains(articleContent.getText(), content);
+  }
+
+  public void verifyElementInContent(By element) {
+    wait.forElementVisible(articleContent);
+    Assertion.assertTrue(articleContentContainer.findElement(element).isDisplayed());
   }
 
   public String getContent() {
@@ -216,70 +194,12 @@ public class ArticlePageObject extends WikiBasePageObject {
 
   public void verifyFormattingFromVE(Formatting format, String content) {
     waitForElementNotVisibleByElement(veMode);
+
     List<WebElement> elements = articleContentContainer.findElements(format.getTag());
-    boolean isPresent = false;
-    for (WebElement elem : elements) {
-      if (elem.getText().contains(content)) {
-        isPresent = true;
-        break;
-      }
-    }
+    boolean isPresent = elements.stream().anyMatch(elem -> elem.getText().contains(content));
+
     wait.forElementVisible(articleEditButton);
     Assertion.assertTrue(isPresent, "text is not present in the article");
-  }
-
-  public void verifyStyleFromVE(Style style, String content) {
-    waitForElementNotVisibleByElement(veMode);
-    List<WebElement> elements = articleContentContainer.findElements(style.getTag());
-    boolean isPresent = false;
-    for (WebElement elem : elements) {
-      if (elem.getText().equals(content)) {
-        isPresent = true;
-        break;
-      }
-    }
-    wait.forElementVisible(articleEditButton);
-    Assertion.assertTrue(isPresent, "text is not present in the article");
-  }
-
-  public VisualEditModePageObject createArticleInCKUsingDropdown(String articleTitle) {
-    scrollAndClick(contributeDropdown);
-    wait.forElementVisible(addArticleInDropdown);
-    CreateArticleModalComponentObject articleModal = clickArticleInDropDown(addArticleInDropdown);
-    articleModal.createPageWithBlankLayout(articleTitle);
-    return new VisualEditModePageObject();
-  }
-
-  public SourceEditModePageObject createArticleInSrcUsingDropdown(String articleTitle) {
-    contributeDropdown.click();
-    wait.forElementVisible(addArticleInDropdown);
-    CreateArticleModalComponentObject articleModal = clickArticleInDropDown(addArticleInDropdown);
-    articleModal.createPageWithBlankLayout(articleTitle);
-    return new SourceEditModePageObject(driver);
-  }
-
-  private CreateArticleModalComponentObject clickArticleInDropDown(WebElement articleDropDown) {
-    wait.forElementClickable(addArticleInDropdown);
-    addArticleInDropdown.click();
-    return new CreateArticleModalComponentObject(driver);
-  }
-
-  public VisualEditorPageObject createArticleInVEUsingDropdown(String articleTitle) {
-    wait.forElementVisible(contributeDropdown);
-    scrollAndClick(contributeDropdown);
-    wait.forElementVisible(addArticleInDropdown);
-    scrollAndClick(addArticleInDropdown);
-    wait.forElementVisible(articleTitleInputModal);
-    articleTitleInputModal.sendKeys(articleTitle);
-    scrollAndClick(submitModal);
-    return new VisualEditorPageObject(driver);
-  }
-
-  public VisualEditModePageObject editArticleInRTEUsingDropdown() {
-    scrollAndClick(openEditDropdown);
-    wait.forElementVisible(editUsingClassicEditor);
-    scrollAndClick(editUsingClassicEditor);
-    return new VisualEditModePageObject();
   }
 
   public MiniEditorComponentObject triggerCommentArea() {
@@ -294,7 +214,7 @@ public class ArticlePageObject extends WikiBasePageObject {
     driver.switchTo().defaultContent();
     scrollAndClick(commentSubmitButton);
     waitForElementNotVisibleByElement(commentSubmitButton, 30);
-    PageObjectLogging.log("submitComment", "comment has been submitted", true);
+    Log.log("submitComment", "comment has been submitted", true);
   }
 
   public void submitEditComment() {
@@ -314,7 +234,7 @@ public class ArticlePageObject extends WikiBasePageObject {
       driver.findElement(By.cssSelector(videoInCommentsSelector.replace("%videoName%", videoName)));
       return true;
     } catch (NoSuchElementException e) {
-      PageObjectLogging.logInfo("Video is not visible in comments section", e);
+      Log.info("Video is not visible in comments section", e);
       return false;
     }
   }
@@ -322,18 +242,24 @@ public class ArticlePageObject extends WikiBasePageObject {
   public MiniEditorComponentObject triggerEditCommentArea() {
     jsActions.scrollToElement(allCommentsArea);
     WebElement mostRecentComment = articleComments.get(0);
-    JavascriptExecutor js = (JavascriptExecutor) driver;
-    js.executeScript("arguments[0].querySelector(arguments[1]).click()", mostRecentComment,
-                     EDIT_BUTTON_SELECTOR);
+    Log.log("First check", mostRecentComment.getText(), true);
+
+    WebElement editButton = mostRecentComment.findElement(By.cssSelector(EDIT_BUTTON_SELECTOR));
+    new Actions(driver).moveToElement(editButton).perform();
+    driver.executeScript("arguments[0].querySelector(arguments[1]).click()",
+                         mostRecentComment,
+                         EDIT_BUTTON_SELECTOR
+    );
     return new MiniEditorComponentObject(driver);
   }
 
   public DeletePageObject deleteFirstComment() {
     jsActions.scrollToElement(allCommentsArea);
     WebElement mostRecentComment = articleComments.get(0);
-    JavascriptExecutor js = (JavascriptExecutor) driver;
-    js.executeScript("arguments[0].querySelector(arguments[1]).click()", mostRecentComment,
-                     DELETE_BUTTON_SELECTOR);
+    driver.executeScript("arguments[0].querySelector(arguments[1]).click()",
+                         mostRecentComment,
+                         DELETE_BUTTON_SELECTOR
+    );
     return new DeletePageObject(driver);
   }
 
@@ -343,7 +269,7 @@ public class ArticlePageObject extends WikiBasePageObject {
         Assertion.assertTrue(!comment.equals(elem.getText()));
       }
     }
-    PageObjectLogging.log("verifyCommentDeleted", "comment " + comment + " was deleted", true);
+    Log.log("verifyCommentDeleted", "comment " + comment + " was deleted", true);
   }
 
   public String getFirstCommentText() {
@@ -386,83 +312,74 @@ public class ArticlePageObject extends WikiBasePageObject {
   }
 
   public String getArticleName() {
-    String articleName = articleHeader.getText();
-    PageObjectLogging.log("getArticleName", "the name of the article is: " + articleName, true);
+    wait.forElementVisible(articleTitle);
+    String articleName = articleTitle.getText();
+    Log.log("getArticleName", "the name of the article is: " + articleName, true);
     return articleName;
   }
 
   public void verifyDropdownForAdmin() {
-    articleEditDropdown.click();
+    this.openArticleEditDropdown();
     wait.forElementVisible(renameDropdown);
     wait.forElementVisible(deleteDropdown);
     wait.forElementVisible(historyDropdown);
     wait.forElementVisible(protectDropdown);
     wait.forElementVisible(veEditButton);
     Assertion.assertEquals(editDropdownElements.size(), 5);
-    PageObjectLogging.log("DropdownVerified", "Edit dropdown verified for admin", true);
+    Log.log("DropdownVerified", "Edit dropdown verified for admin", true);
   }
 
   public void verifyDropdownForUser() {
-    articleEditDropdown.click();
+    this.openArticleEditDropdown();
     wait.forElementVisible(historyDropdown);
     wait.forElementVisible(renameDropdown);
     wait.forElementVisible(veEditButton);
     Assertion.assertEquals(editDropdownElements.size(), 3);
-    PageObjectLogging.log("DropdownVerified", "Edit dropdown verified for user", true);
+    Log.log("DropdownVerified", "Edit dropdown verified for user", true);
   }
 
   public void verifyDropdownForAnon() {
-    articleEditDropdown.click();
+    this.openArticleEditDropdown();
     wait.forElementVisible(historyDropdown);
     wait.forElementVisible(veEditButton);
     Assertion.assertEquals(editDropdownElements.size(), 2);
-    PageObjectLogging.log("DropdownVerified", "Edit dropdown verified for anon", true);
+    Log.log("DropdownVerified", "Edit dropdown verified for anon", true);
   }
 
   public void verifyPhoto() {
     wait.forElementVisible(imageArticle);
-    PageObjectLogging.log("verifyPhoto", "photo is visible", true);
+    Log.log("verifyPhoto", "photo is visible", true);
   }
 
   public void verifyGallery() {
     wait.forElementVisible(galleryArticle);
-    PageObjectLogging.log("verifyGallery", "gallery is visible", true);
+    Log.log("verifyGallery", "gallery is visible", true);
   }
 
   public void verifySlideshow() {
     wait.forElementVisible(slideshowArticle);
-    PageObjectLogging.log("verifySlideshow", "slideshow is visible", true);
+    Log.log("verifySlideshow", "slideshow is visible", true);
   }
 
   public void verifySlider() {
     wait.forElementVisible(sliderArticle);
-    PageObjectLogging.log("verifySlider", "slider is visible", true);
+    Log.log("verifySlider", "slider is visible", true);
   }
 
   public void verifyVideo() {
     driver.findElement(By.cssSelector("#mw-content-text .video-thumbnail"));
-    PageObjectLogging.log("verifyVideo", "video is visible", true);
+    Log.log("verifyVideo", "video is visible", true);
   }
 
   public void verifyVideoInline() {
     wait.forElementVisible(videoInline);
-    PageObjectLogging.log("verifyVideoInline", "Video is visible", true);
-  }
-
-  public void verifyVideoAutoplay(String providerName) {
-    VideoComponentObject video = new VideoComponentObject(driver, videoInline);
-    video.verifyVideoAutoplay(providerName, true);
-  }
-
-  public VideoComponentObject getVideoPlayer() {
-    return new VideoComponentObject(driver, videoInline);
+    Log.log("verifyVideoInline", "Video is visible", true);
   }
 
   private void verifyTableProperty(String propertyName, int propertyValue) {
     wait.forElementVisible(table);
     Assertion.assertEquals(table.getAttribute(propertyName), Integer.toString(propertyValue));
-    PageObjectLogging.log("verifyTableProperty", "table has correct " + propertyName + " property",
-                          true);
+    Log.log("verifyTableProperty", "table has correct " + propertyName + " property", true);
   }
 
   public void verifyTableBorder(int propertyValue) {
@@ -479,9 +396,10 @@ public class ArticlePageObject extends WikiBasePageObject {
 
   public void verifyTableAlignment(Alignment alignment) {
     wait.forElementVisible(table);
-    Assertion.assertEquals(table.getCssValue("float").toLowerCase(), alignment.toString()
-        .toLowerCase());
-    PageObjectLogging.log("verifyTableAlignment", "table has correct alignment", true);
+    Assertion.assertEquals(table.getCssValue("float").toLowerCase(),
+                           alignment.toString().toLowerCase()
+    );
+    Log.log("verifyTableAlignment", "table has correct alignment", true);
   }
 
   public void verifyTableSize(int width, int height) {
@@ -489,7 +407,7 @@ public class ArticlePageObject extends WikiBasePageObject {
     Dimension size = table.getSize();
     Assertion.assertEquals(size.getHeight(), height);
     Assertion.assertEquals(size.getWidth(), width);
-    PageObjectLogging.log("verifyTableSize", "table has correct size", true);
+    Log.log("verifyTableSize", "table has correct size", true);
   }
 
   public void verifyVideoAlignment(PositionsVideo positions) {
@@ -527,7 +445,7 @@ public class ArticlePageObject extends WikiBasePageObject {
   public void verifyVideoName(String nameDesired) {
     String name = videoThumbnailWrapper.findElement(By.className("title")).getText();
     Assertion.assertStringContains(name, nameDesired);
-    PageObjectLogging.log("verifyVideoName", "video has expected name", true);
+    Log.log("verifyVideoName", "video has expected name", true);
   }
 
   public VetAddVideoComponentObject clickAddVideoPlaceholder() {
@@ -540,15 +458,6 @@ public class ArticlePageObject extends WikiBasePageObject {
     wait.forElementVisible(imageAddPlaceholder);
     scrollAndClick(imageAddPlaceholder);
     return new PhotoAddComponentObject(driver);
-  }
-
-  public FilePage clickVideoDetailsButton() {
-    wait.forElementVisible(videoTitle);
-    jsActions.execute("$('a.details.sprite').css('visibility', 'visible')");
-    wait.forElementVisible(videoDetailsButton);
-    videoDetailsButton.click();
-    PageObjectLogging.log("clickVideoDetailsButton", "Video Details link is clicked", true);
-    return new FilePage();
   }
 
   private void clickAddCategoryButton() {
@@ -572,7 +481,7 @@ public class ArticlePageObject extends WikiBasePageObject {
     wait.forElementClickable(saveCategory);
     saveCategory.click();
     waitForElementNotVisibleByElement(addCategoryInput);
-    PageObjectLogging.log("submitCategory", "submit category clicked", true);
+    Log.log("submitCategory", "submit category clicked", true);
   }
 
   public void addCategory(String category) {
@@ -580,73 +489,71 @@ public class ArticlePageObject extends WikiBasePageObject {
     typeCategoryName(category);
     new Actions(driver).sendKeys(addCategoryInput, Keys.ENTER).perform();
     wait.forElementVisible(categoryNew);
-    PageObjectLogging.log("addCategory", category + " category added", true);
+    Log.log("addCategory", category + " category added", true);
   }
 
   public EditCategoryComponentObject editCategory(String category) {
-    WebElement editCategory =
-        driver
-            .findElement(By.cssSelector(editCategorySelector.replace("%categoryName%", category)));
+    WebElement editCategory = driver.findElement(By.cssSelector(editCategorySelector.replace("%categoryName%",
+                                                                                             category
+    )));
     scrollAndClick(editCategory);
-    PageObjectLogging.log("editCategory", "edit button on category " + category + " clicked", true);
+    Log.log("editCategory", "edit button on category " + category + " clicked", true);
     return new EditCategoryComponentObject(driver);
   }
 
   public void removeCategory(String category) {
-    WebElement editCategory =
-        driver.findElement(By.cssSelector(removeCategorySelector
-                                              .replace("%categoryName%", category)));
+    WebElement editCategory = driver.findElement(By.cssSelector(removeCategorySelector.replace("%categoryName%",
+                                                                                               category
+    )));
     scrollAndClick(editCategory);
-    PageObjectLogging.log("removeCategory", "remove button on category " + category + " clicked",
-                          true);
+    Log.log("removeCategory", "remove button on category " + category + " clicked", true);
   }
 
-  public String addCategorySuggestions(String category, int categoryNumber) {
+  public String addCategorySuggestions(String category, int categoryIndex) {
     clickAddCategoryButton();
     typeCategoryName(category);
-    wait.forElementVisible(categorySuggestionsList);
-    WebElement desiredCategory = categorySuggestionsListItems.get(categoryNumber);
+    wait.forElementVisible(categorySuggestionsDialog);
+    if (categoryIndex > categorySuggestionsListItems.size() - 1) {
+      throw new WebDriverException(
+          "List of category suggestions doesn't contain sufficient number of elements");
+    }
+    WebElement desiredCategory = categorySuggestionsListItems.get(categoryIndex);
     String desiredCategoryText = desiredCategory.getText();
-    scrollAndClick(categorySuggestionsListItems.get(categoryNumber));
-    waitForElementNotVisibleByElement(categorySuggestionsList);
-    PageObjectLogging.log("addCategorySuggestions", "category " + category
-                                                    + " added from suggestions", true);
+    scrollAndClick(categorySuggestionsListItems.get(categoryIndex));
+    waitForElementNotVisibleByElement(categorySuggestionsDialog);
+    Log.log("addCategorySuggestions",
+            "category " + desiredCategoryText + " added from suggestions",
+            true
+    );
     return desiredCategoryText;
   }
 
-  public void verifyCategoryPresent(String category) {
-    boolean categoryVisible = false;
-    for (WebElement elem : categoryList) {
-      if (elem.getText().equals(category)) {
-        categoryVisible = true;
-      }
-    }
-    Assertion.assertTrue(categoryVisible, "category " + category + " not present");
+  public boolean isCategoryPresent(String category) {
+    return categoryList.stream().anyMatch(elem -> elem.getText().equals(category));
   }
 
   public WatchPageObject unfollowArticle() {
-    String
-        url =
-        urlBuilder
-            .appendQueryStringToURL(urlBuilder.getUrlForWiki(), "title=" + articleTitle.getText());
+    String url = urlBuilder.appendQueryStringToURL(urlBuilder.getUrl(),
+                                                   "title=" + articleTitle.getText()
+    );
     url = urlBuilder.appendQueryStringToURL(url, URLsContent.ACTION_UNFOLLOW);
     getUrl(url);
-    return new WatchPageObject(driver);
+    return new WatchPageObject();
   }
 
   public void verifyTOCpresent() {
     wait.forElementVisible(tableOfContents);
-    PageObjectLogging.log("verifyTOCpresent", "toc is present", true);
+    Log.log("verifyTOCpresent", "toc is present", true);
   }
 
   public void verifyTOCexpanded() {
     wait.forElementVisible(tableOfContentsOrderedList);
-    PageObjectLogging.log("verifyTOCexpanded", "toc is expanded", true);
+    Log.log("verifyTOCexpanded", "toc is expanded", true);
   }
 
   public void verifyTOCcollapsed() {
     waitForElementNotVisibleByElement(tableOfContentsOrderedList);
-    PageObjectLogging.log("verifyTOCcollapsed", "toc is collapsed", true);
+    Log.log("verifyTOCcollapsed", "toc is collapsed", true);
   }
 
   /**
@@ -655,8 +562,7 @@ public class ArticlePageObject extends WikiBasePageObject {
   public void clickTOCshowHideButton() {
     wait.forElementVisible(tableOfContentsShowHideButton);
     scrollAndClick(tableOfContentsShowHideButton);
-    PageObjectLogging.log("clickTOCshowHideButton", "table of contents 'show/hide' button clicked",
-                          true);
+    Log.log("clickTOCshowHideButton", "table of contents 'show/hide' button clicked", true);
   }
 
   /**
@@ -676,42 +582,40 @@ public class ArticlePageObject extends WikiBasePageObject {
     Assertion.assertNotEquals(sectionYbefore, sectionYafter);
     // assume that if section is less than 5px from top, it is scrolled up properly
     Assertion.assertTrue(sectionYafter < 5);
-    PageObjectLogging.log("verifyTOCsectionLinkWorks", "choosen section " + sectionID
-                                                       + " was scrolled up", true);
+    Log.log("verifyTOCsectionLinkWorks", "choosen section " + sectionID + " was scrolled up", true);
   }
 
-  public void verifyWikiTitleOnCongratualtionsLightBox(String wikiName) {
+  public String getWikiTitleOnCongratulationsLightBox() {
     wait.forElementVisible(welcomeLightBoxTitle);
-    Assertion.assertStringContains(welcomeLightBoxTitle.getText(), wikiName);
+    return welcomeLightBoxTitle.getText();
   }
 
   public void closeNewWikiCongratulationsLightBox() {
     wait.forElementClickable(welcomeLightBoxCloseButton);
     scrollAndClick(welcomeLightBoxCloseButton);
-    PageObjectLogging.log("closeNewWikiCongratulationsLightBox ",
-                          "congratulations lightbox closed", true);
+    Log.log("closeNewWikiCongratulationsLightBox ", "congratulations lightbox closed", true);
   }
 
-  public void verifyWikiTitleHeader(String wikiName) {
-    Assertion.assertStringContains(wikiNameHeader.getText(), wikiName);
+  public String getWikiTitleHeader() {
+    return wikiNameHeader.getText();
   }
 
   public void verifyTableRemoved() {
     Assertion.assertTrue(!isElementOnPage(table));
-    PageObjectLogging.log("verifyTableRemoved", "table was removed", true);
+    Log.log("verifyTableRemoved", "table was removed", true);
   }
 
   public LightboxComponentObject clickThumbnailImage() {
     wait.forElementClickable(thumbnailImageArticle);
     thumbnailImageArticle.click();
-    PageObjectLogging.log("clickThumbnailImage", "Thumbnail image is clicked", true);
+    Log.log("clickThumbnailImage", "Thumbnail image is clicked", true);
     return new LightboxComponentObject(driver);
   }
 
   public LightboxComponentObject clickThumbnailVideoLightbox() {
     wait.forElementClickable(videoThumbnail);
     videoThumbnail.click();
-    PageObjectLogging.log("clickThumbnailVideoLightbox", "Video thumbnail is clicked", true);
+    Log.log("clickThumbnailVideoLightbox", "Video thumbnail is clicked", true);
     return new LightboxComponentObject(driver);
   }
 
@@ -719,7 +623,7 @@ public class ArticlePageObject extends WikiBasePageObject {
     WebElement thumbnail = getThumbnailVideoInline();
     wait.forElementClickable(thumbnail);
     thumbnail.click();
-    PageObjectLogging.log("clickThumbnailVideoInline", "Video thumbnail is clicked", true);
+    Log.log("clickThumbnailVideoInline", "Video thumbnail is clicked", true);
     verifyVideoInline();
     Integer videoWidth = getVideoWidth(thumbnail);
     return new VideoComponentObject(driver, videoInline, videoWidth);
@@ -729,11 +633,11 @@ public class ArticlePageObject extends WikiBasePageObject {
     for (WebElement thumbnail : videoThumbnailList) {
       Integer width = getVideoWidth(thumbnail);
       if (width > minInlineVideoSize) {
-        PageObjectLogging.log("getThumbnailVideoInline", "Video thumbnail found", true);
+        Log.log("getThumbnailVideoInline", "Video thumbnail found", true);
         return thumbnail;
       }
     }
-    PageObjectLogging.log("getThumbnailVideoInline", "Video thumbnail not found", true);
+    Log.log("getThumbnailVideoInline", "Video thumbnail not found", true);
     return null;
   }
 
@@ -741,7 +645,7 @@ public class ArticlePageObject extends WikiBasePageObject {
     WebElement redLinkToClick = redLinks.get(linkNumber);
     VECreateArticleModalComponentObject veArticleModal = clickVERedLink(redLinkToClick);
     veArticleModal.createPage();
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   public VisualEditModePageObject openCKModeWithRedLinks(int linkNumber) {
@@ -767,36 +671,13 @@ public class ArticlePageObject extends WikiBasePageObject {
     WebElement redLinkToClick = redLinks.get(linkNumber);
     CreateArticleModalComponentObject articleModal = clickRedLink(redLinkToClick);
     articleModal.createPageWithBlankLayout("");
-    return new SourceEditModePageObject(driver);
+    return new SourceEditModePageObject();
   }
 
-  public EmbedMapComponentObject clickViewEmbedMap() {
-    wait.forElementVisible(viewEmbedMapButton);
-    jsActions.scrollToElement(viewEmbedMapButton);
-    viewEmbedMapButton.click();
-    driver.switchTo().activeElement();
-    return new EmbedMapComponentObject(driver);
-  }
+  public ArticlePageObject clickCommentButton() {
+    commentButton.click();
 
-  /**
-   * @param rgba String representing function rgba(int, int, int, int)
-   * @return int[], where 0='red', 1='green', 2='blue'
-   */
-  public static int[] convertRGBAFunctiontoIntTable(String rgba) {
-    int[] extract = new int[3];
-    int start = rgba.indexOf("(", 0) + 1;
-    int end = rgba.indexOf(",", 0);
-    int red = Integer.parseInt(rgba.substring(start, end));
-    start = rgba.indexOf(" ", end + 1) + 1;
-    end = rgba.indexOf(",", end + 1);
-    int green = Integer.parseInt(rgba.substring(start, end));
-    start = rgba.indexOf(" ", end + 1) + 1;
-    end = rgba.indexOf(",", end + 1);
-    int blue = Integer.parseInt(rgba.substring(start, end));
-    extract[0] = red;
-    extract[1] = green;
-    extract[2] = blue;
-    return extract;
+    return this;
   }
 
   public void verifyMainEditEditor(Editor expectedEditor) {
@@ -819,20 +700,20 @@ public class ArticlePageObject extends WikiBasePageObject {
     }
   }
 
-  public void verifyCreateAPageEditor(Editor expectedEditor, String articleName) {
+  public void verifyCreateAPageEditor(Editor expectedEditor) {
     switch (expectedEditor) {
       case VE:
-        VisualEditorPageObject ve = createArticleInVEUsingDropdown(articleName);
+        VisualEditorPageObject ve = openVEModeWithMainEditButton();
         ve.verifyVEToolBarPresent();
         ve.verifyEditorSurfacePresent();
         break;
       case CK:
-        VisualEditModePageObject ck = createArticleInCKUsingDropdown(articleName);
+        VisualEditModePageObject ck = openCKModeWithMainEditButtonDropdown();
         Assertion.assertTrue(ck.isContentLoaded(), "Content is not loaded");
         ck.clickPublishButton();
         break;
       case SRC:
-        SourceEditModePageObject src = createArticleInSrcUsingDropdown(articleName);
+        SourceEditModePageObject src = openSrcModeWithMainEditButtonDropdown();
         src.verifySourceOnlyMode();
         src.clickPublishButton();
         break;
@@ -910,10 +791,8 @@ public class ArticlePageObject extends WikiBasePageObject {
     }
   }
 
-  public VisualEditModePageObject editArticleInCKUsingDropdown() {
-    contributeDropdown.click();
-    wait.forElementVisible(editArticleInDropDown);
-    editArticleInDropDown.click();
-    return new VisualEditModePageObject();
+  public boolean isFeaturedVideo() {
+    wait.forElementVisible(featuredVideo);
+    return featuredVideo.isDisplayed();
   }
 }

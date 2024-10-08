@@ -1,6 +1,6 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.visualeditordialogs;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.visualeditor.VisualEditorPageObject;
 
@@ -10,10 +10,10 @@ import org.openqa.selenium.support.FindBy;
 
 public class VisualEditorDialog extends WikiBasePageObject {
 
-  @FindBy(css = ".oo-ui-window-ready .oo-ui-window-frame")
-  private WebElement frame;
   @FindBy(css = ".oo-ui-window-ready")
   protected WebElement dialog;
+  @FindBy(css = ".oo-ui-window-ready .oo-ui-window-frame")
+  private WebElement frame;
   @FindBy(css = ".oo-ui-window-ready .oo-ui-icon-close")
   private WebElement closeButton;
 
@@ -54,7 +54,7 @@ public class VisualEditorDialog extends WikiBasePageObject {
     wait.forElementClickable(closeButton);
     closeButton.click();
     waitForDialogNotVisible();
-    PageObjectLogging.log("closeDialog", "Dialog is closed", true);
-    return new VisualEditorPageObject(driver);
+    Log.log("closeDialog", "Dialog is closed", true);
+    return new VisualEditorPageObject();
   }
 }

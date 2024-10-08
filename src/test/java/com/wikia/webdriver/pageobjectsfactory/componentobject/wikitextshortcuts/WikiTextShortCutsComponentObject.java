@@ -8,18 +8,18 @@ import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 
-public class WikiTextShortCutsComponentObject extends SourceEditModePageObject{
+public class WikiTextShortCutsComponentObject extends SourceEditModePageObject {
 
-  @FindBy (css = "a[onclick*='Category']")
+  @FindBy(css = "a[onclick*='Category']")
   private List<WebElement> categories;
 
   public WikiTextShortCutsComponentObject(WebDriver driver) {
-    super(driver);
+    super();
   }
 
   public SourceEditModePageObject clickCategory(int index) {
     wait.forElementVisible(categories.get(index));
     categories.get(index).click();
-    return new SourceEditModePageObject(driver);
+    return new SourceEditModePageObject();
   }
 }

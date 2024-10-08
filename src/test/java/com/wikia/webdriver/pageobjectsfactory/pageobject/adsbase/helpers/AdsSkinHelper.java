@@ -4,13 +4,11 @@ import com.wikia.webdriver.common.contentpatterns.AdsContent;
 import com.wikia.webdriver.common.core.imageutilities.ImageComparison;
 import com.wikia.webdriver.common.core.imageutilities.ImageEditor;
 import com.wikia.webdriver.common.core.imageutilities.Shooter;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 
-import org.openqa.selenium.By;
+import org.openqa.selenium.*;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -23,6 +21,7 @@ import java.io.File;
 public class AdsSkinHelper {
 
   private static final String WIKIA_MESSAGE_BUBLE = "#WikiaNotifications div[id*='msg']";
+  private static final String WIKIA_MESSAGE_BUBLE_CLOSE_BUTTON = ".close-notification";
   private static final int IMAGES_THRESHOLD_PERCENT = 12;
   private final WebDriver driver;
   private String pathToLeftPart;
@@ -72,10 +71,10 @@ public class AdsSkinHelper {
       patternImage = imageEditor.fileToImage(patternFile);
     }
     Dimension size = new Dimension(patternImage.getWidth(), patternImage.getHeight());
-    PageObjectLogging.logImage("EXPECTED", patternFile, true);
+    Log.image("EXPECTED", patternFile, true);
     Point startPoint = getStartPoint(patternImage, isLeft);
     File actualFile = shooter.capturePageAndCrop(startPoint, size, driver);
-    PageObjectLogging.logImage("ACTUAL", actualFile, true);
+    Log.image("ACTUAL", actualFile, true);
     BufferedImage actualImg = imageEditor.fileToImage(actualFile);
     return !imageComparison.areImagesDifferent(patternImage, actualImg, IMAGES_THRESHOLD_PERCENT);
   }
@@ -110,8 +109,14 @@ public class AdsSkinHelper {
   }
 
   private void hideCoveredSkinElements() {
-    adsComparison.hideSlot(AdsContent.WIKIA_BAR, driver);
-    adsComparison.hideSlot(WIKIA_MESSAGE_BUBLE, driver);
+    closeWikiaNotifications();
+    adsComparison.hideSlot(AdsContent.getSlotSelector(AdsContent.WIKIA_BAR), driver);
+  }
+
+  private void closeWikiaNotifications() {
+    if (!driver.findElements(By.cssSelector(WIKIA_MESSAGE_BUBLE)).isEmpty()) {
+      driver.findElement(By.cssSelector(WIKIA_MESSAGE_BUBLE_CLOSE_BUTTON)).click();
+    }
   }
 
   public String getMiddleColor() {

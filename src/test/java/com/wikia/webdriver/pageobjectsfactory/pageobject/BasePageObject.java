@@ -2,61 +2,52 @@ package com.wikia.webdriver.pageobjectsfactory.pageobject;
 
 import com.wikia.webdriver.common.contentpatterns.URLsContent;
 import com.wikia.webdriver.common.contentpatterns.XSSContent;
-import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.core.CommonExpectedConditions;
-import com.wikia.webdriver.common.core.WikiaWebDriver;
-import com.wikia.webdriver.common.core.configuration.Configuration;
+import com.wikia.webdriver.common.core.*;
 import com.wikia.webdriver.common.core.elemnt.JavascriptActions;
 import com.wikia.webdriver.common.core.elemnt.Wait;
 import com.wikia.webdriver.common.core.purge.PurgeMethod;
+import com.wikia.webdriver.common.core.url.FandomUrlBuilder;
 import com.wikia.webdriver.common.core.url.Page;
 import com.wikia.webdriver.common.core.url.UrlBuilder;
 import com.wikia.webdriver.common.driverprovider.DriverProvider;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 
+import com.google.common.base.Function;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Point;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public class BasePageObject {
 
+  private static final int TIMEOUT_PAGE_REGISTRATION = 3;
+  private static final String
+      COMSCORE_PIXEL_URL
+      = "script[src*='b.scorecardresearch.com/beacon.js']";
   public final Wait wait;
-  protected WikiaWebDriver driver = DriverProvider.getActiveDriver();
   public WebDriverWait waitFor;
   public Actions builder;
+  protected WikiaWebDriver driver = DriverProvider.getActiveDriver();
   protected int timeOut = 15;
-  protected UrlBuilder urlBuilder = new UrlBuilder();
+  protected UrlBuilder urlBuilder = UrlBuilder.createUrlBuilder();
+  protected FandomUrlBuilder fandomUrlBuilder = new FandomUrlBuilder();
   protected JavascriptActions jsActions;
 
-  @FindBy(css = "#WallNotifications div.notification div.msg-title")
-  protected WebElement notificationsLatestNotificationOnWiki;
-  @FindBy(css = "#WallNotifications > li")
-  protected WebElement notificationsShowNotificationsLogo;
-  @FindBy(css = ".mw-htmlform-submit")
-  protected WebElement followSubmit;
-  @FindBy(css = "#ca-unwatch")
-  protected WebElement followedButton;
+  public static final int IMPLICIT_SHORT = 250;
+  public static final int IMPLICIT_MEDIUM = 500;
 
   public BasePageObject() {
     this.waitFor = new WebDriverWait(driver, timeOut);
@@ -67,25 +58,65 @@ public class BasePageObject {
     PageFactory.initElements(driver, this);
   }
 
-  //wait for comscore to load
-  public void waitForPageLoad() {
-    wait.forElementPresent(By.cssSelector("script[src='http://b.scorecardresearch.com/beacon.js']"));
-  }
-
   public static String getTimeStamp() {
     Date time = new Date();
     long timeCurrent = time.getTime();
     return String.valueOf(timeCurrent);
   }
 
-  public void mouseOverInArticleIframe(String cssSelecotr) {
-    jsActions.execute("$($($('iframe[title*=\"Rich\"]')[0].contentDocument.body).find('"
-                      + cssSelecotr + "')).mouseenter()");
-    try {
-      Thread.sleep(500);
-    } catch (InterruptedException e) {
-      PageObjectLogging.log("mouseOverInArticleIframe", e, false);
-    }
+  private static String getEmailChangeConfirmationLink(String email, String password) {
+    String mailSubject = "Confirm your email address change on FANDOM";
+    String url = EmailUtils.getActivationLinkFromEmailContent(EmailUtils.getFirstEmailContent(email,
+                                                                                              password,
+                                                                                              mailSubject
+    ));
+    Log.log("getActivationLinkFromMail",
+            "activation link is visible in email content: " + url,
+            true
+    );
+    return url;
+  }
+
+  public static String getPasswordResetLink(String email, String password) {
+    String passwordResetEmail = EmailUtils.getFirstEmailContent(email,
+                                                                password,
+                                                                "Reset your FANDOM password"
+    );
+    String resetLink = EmailUtils.getPasswordResetLinkFromEmailContent(passwordResetEmail);
+    Log.log("Password reset link", "Password reset link received: " + resetLink, true);
+
+    return resetLink;
+  }
+
+  public static String getEmailConfirmationLink(String email, String password) {
+    String emailConfirmationMessage = EmailUtils.getFirstEmailContent(email,
+                                                                      password,
+                                                                      "Confirm your email and get started on FANDOM!"
+    );
+    String confirmationLink = EmailUtils.getConfirmationLinkFromEmailContent(
+        emailConfirmationMessage);
+    Log.log("Email confirmation link",
+            "Email confirmation link received: " + confirmationLink,
+            true
+    );
+
+    return confirmationLink;
+  }
+
+  // wait for comscore to load
+  public void waitForPageLoad() {
+    wait.forElementPresent(By.cssSelector(COMSCORE_PIXEL_URL));
+  }
+
+  public BasePageObject waitForPageReload() {
+    waitSafely(() -> wait.forElementVisible(By.className("loading-overlay"),
+                                            Duration.ofSeconds(3)
+    ));
+    waitSafely(
+        () -> wait.forElementNotVisible(By.className("loading-overlay")),
+        "Loading overlay still visible, page not loaded in expected time"
+    );
+    return this;
   }
 
   /**
@@ -93,11 +124,11 @@ public class BasePageObject {
    * us no need for waiting 30 seconds
    */
   protected boolean isElementOnPage(By by) {
-    changeImplicitWait(500, TimeUnit.MILLISECONDS);
+    changeImplicitWait(IMPLICIT_MEDIUM, TimeUnit.MILLISECONDS);
     try {
       return driver.findElements(by).size() > 0;
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
   }
 
@@ -106,7 +137,7 @@ public class BasePageObject {
    * us no need for waiting 30 seconds
    */
   protected boolean isElementOnPage(WebElement element) {
-    changeImplicitWait(500, TimeUnit.MILLISECONDS);
+    changeImplicitWait(IMPLICIT_MEDIUM, TimeUnit.MILLISECONDS);
     boolean isElementOnPage = true;
     try {
       // Get location on WebElement is rising exception when element is not present
@@ -114,9 +145,51 @@ public class BasePageObject {
     } catch (WebDriverException ex) {
       isElementOnPage = false;
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
     return isElementOnPage;
+  }
+
+  /**
+   * WebElement.isEnabled() method signature says that it returns true for anything except disabled
+   * input fields. In order to check if non-input elements are disabled, "disabled" attribute value
+   * must be checked and compared to "true" value
+   *
+   * @param element WebElement on the page
+   * @return true if value of "disabled" attribute is different than "true"
+   */
+  protected boolean isElementEnabled(WebElement element) {
+    return !"true".equals(element.getAttribute("disabled"));
+  }
+
+  /**
+   * Method to check if WebElement is displayed on the page
+   *
+   * @return true if element is displayed, otherwise return false
+   */
+
+  protected boolean isElementDisplayed(WebElement element) {
+    try {
+      return element.isDisplayed();
+    } catch (NoSuchElementException e) {
+      Log.info(e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * Method to check if WebElement is displayed on the page
+   *
+   * @return true if element is displayed, otherwise return false
+   */
+
+  protected boolean isElementDisplayed(WebElement element, int timeout) {
+    try {
+      wait.forElementVisible(element, timeout);
+      return true;
+    } catch (TimeoutException e) {
+      return false;
+    }
   }
 
   /**
@@ -135,20 +208,32 @@ public class BasePageObject {
    * no need for waiting 30 seconds
    */
   protected int getNumOfElementOnPage(By cssSelectorBy) {
-    changeImplicitWait(500, TimeUnit.MILLISECONDS);
+    changeImplicitWait(IMPLICIT_MEDIUM, TimeUnit.MILLISECONDS);
     int numElementOnPage;
     try {
       numElementOnPage = driver.findElements(cssSelectorBy).size();
     } catch (WebDriverException ex) {
       numElementOnPage = 0;
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
     return numElementOnPage;
   }
 
+  protected void waitSafely(Runnable o) {
+    waitSafely(o, "");
+  }
+
+  void waitSafely(Runnable o, String message) {
+    try {
+      o.run();
+    } catch (TimeoutException e) {
+      Log.log("Timed out waiting", String.format("%s\n%s", message, e), true);
+    }
+  }
+
   protected boolean isElementInContext(String cssSelector, WebElement element) {
-    changeImplicitWait(500, TimeUnit.MILLISECONDS);
+    changeImplicitWait(IMPLICIT_MEDIUM, TimeUnit.MILLISECONDS);
     boolean isElementInElement = true;
     try {
       if (element.findElements(By.cssSelector(cssSelector)).size() < 1) {
@@ -157,12 +242,12 @@ public class BasePageObject {
     } catch (WebDriverException ex) {
       isElementInElement = false;
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
     return isElementInElement;
   }
 
-  protected void scrollTo(WebElement element) {
+  public void scrollTo(WebElement element) {
     jsActions.scrollElementIntoViewPort(element);
     wait.forElementClickable(element, 5);
   }
@@ -187,26 +272,31 @@ public class BasePageObject {
   public boolean isStringInURL(String givenString) {
     String currentURL = driver.getCurrentUrl();
     if (currentURL.toLowerCase().contains(givenString.toLowerCase())) {
-      PageObjectLogging.log("isStringInURL", "Current url contains " + givenString, true);
+      Log.log("isStringInURL",
+              String.format("Current url: %s contains given string: %s", currentURL, givenString),
+              true
+      );
       return true;
     } else {
-      PageObjectLogging
-          .log("isStringInURL", "current url doesn't contain " + givenString, false);
+      Log.log("isStringInURL",
+              String.format("Current url: %s does not contain given string: %s",
+                            currentURL,
+                            givenString
+              ),
+              false
+      );
       return false;
     }
   }
 
-  public void verifyURLcontains(final String givenString, int timeOut) {
-    changeImplicitWait(250, TimeUnit.MILLISECONDS);
+  public void verifyUrlContains(final String givenString, int timeOut) {
+    changeImplicitWait(IMPLICIT_SHORT, TimeUnit.MILLISECONDS);
     try {
-      new WebDriverWait(driver, timeOut).until(new ExpectedCondition<Boolean>() {
-        @Override
-        public Boolean apply(WebDriver driver) {
-          return driver.getCurrentUrl().toLowerCase().contains(givenString.toLowerCase());
-        }
-      });
+      new WebDriverWait(driver, timeOut).until((ExpectedCondition<Boolean>) d -> d.getCurrentUrl()
+          .toLowerCase()
+          .contains(givenString.toLowerCase()));
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
   }
 
@@ -225,26 +315,32 @@ public class BasePageObject {
   public void getUrl(String url, boolean makeScreenshot) {
     driver.get(url);
     if (makeScreenshot) {
-      PageObjectLogging.log("Take screenshot",
-                            String.format("Screenshot After Navigation to: %s", url), true, driver);
+      Log.log("Take screenshot",
+              String.format("Screenshot After Navigation to: %s", url),
+              true,
+              driver
+      );
     }
   }
 
   public void getUrl(Page page) {
-    getUrl(urlBuilder.getUrlForPage(page));
+    getUrl(page.getUrl());
   }
 
   public void getUrl(Page page, String queryString) {
-    getUrl(urlBuilder.appendQueryStringToURL(urlBuilder.getUrlForPage(page), queryString));
+    getUrl(urlBuilder.appendQueryStringToURL(page.getUrl(), queryString));
+  }
+
+  public void getUrl(String page, String queryString) {
+    getUrl(urlBuilder.appendQueryStringToURL(page, queryString));
   }
 
   public void refreshPage() {
     try {
       driver.navigate().refresh();
-      PageObjectLogging.log("refreshPage", "page refreshed", true);
+      Log.log("refreshPage", "page refreshed", true);
     } catch (TimeoutException e) {
-      PageObjectLogging
-          .log("refreshPage", "page loaded for more than 30 seconds after click", true);
+      Log.log("refreshPage", "page loaded for more than 30 seconds after click", true);
     }
   }
 
@@ -258,97 +354,111 @@ public class BasePageObject {
         windows = driver.getWindowHandles().toArray();
         sumDelay += 500;
       } catch (InterruptedException e) {
-        PageObjectLogging.log(windowName, e, false);
+        Log.log(windowName, e, false);
       }
       if (sumDelay > 5000) {
-        PageObjectLogging.log(windowName, comment, false);
+        Log.log(windowName, comment, false);
         break;
       }
     }
   }
 
+  protected void hover(WebElement element) {
+    new Actions(driver).moveToElement(element).perform();
+  }
+
+  protected void moveAway(WebElement element) {
+    new Actions(driver).moveToElement(element, -200, 0).perform();
+  }
+
   protected Boolean scrollToSelector(String selector) {
     if (isElementOnPage(By.cssSelector(selector))) {
-      JavascriptExecutor js = (JavascriptExecutor) driver;
       try {
-        js.executeScript("var x = $(arguments[0]);"
-                         + "window.scroll(0,x.position()['top']+x.height()+100);"
-                         + "$(window).trigger('scroll');", selector);
+        driver.executeScript("var x = $(arguments[0]);" + "window.scroll(0,x.position()['top']+x.height()+100);"
+                             + "$(window).trigger('scroll');",
+                             selector
+        );
       } catch (WebDriverException e) {
         if (e.getMessage().contains(XSSContent.NO_JQUERY_ERROR)) {
-          PageObjectLogging.log("JSError", "JQuery is not defined", false);
+          Log.log("JSError", "JQuery is not defined", false);
         }
       }
       return true;
     } else {
-      PageObjectLogging
-          .log("SelectorNotFound", "Selector " + selector + " not found on page", true);
+      Log.log("SelectorNotFound", "Selector " + selector + " not found on page", true);
       return false;
     }
   }
 
   // You can get access to hidden elements by changing class
-  public void unhideElementByClassChange(String elementName, String classWithoutHidden,
-                                         int... optionalIndex) {
+  public void unhideElementByClassChange(
+      String elementName, String classWithoutHidden, int... optionalIndex
+  ) {
     int numElem = optionalIndex.length == 0 ? 0 : optionalIndex[0];
     JavascriptExecutor jse = (JavascriptExecutor) driver;
-    jse.executeScript("document.getElementsByName('" + elementName + "')[" + numElem
-                      + "].setAttribute('class', '" + classWithoutHidden + "');");
+    jse.executeScript(
+        "document.getElementsByName('" + elementName + "')[" + numElem + "].setAttribute('class', '"
+        + classWithoutHidden + "');");
   }
 
   public void waitForElementNotVisibleByElement(WebElement element) {
-    changeImplicitWait(250, TimeUnit.MILLISECONDS);
+    changeImplicitWait(IMPLICIT_SHORT, TimeUnit.MILLISECONDS);
     try {
       waitFor.until(CommonExpectedConditions.invisibilityOfElementLocated(element));
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
   }
 
   public void waitForElementNotVisibleByElement(WebElement element, long timeout) {
-    changeImplicitWait(250, TimeUnit.MILLISECONDS);
+    changeImplicitWait(IMPLICIT_SHORT, TimeUnit.MILLISECONDS);
     try {
-      new WebDriverWait(driver, timeout).until(CommonExpectedConditions.invisibilityOfElementLocated(element));
+      new WebDriverWait(driver,
+                        timeout
+      ).until(CommonExpectedConditions.invisibilityOfElementLocated(element));
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
   }
 
-  public void waitForElementNotClickableByElement(WebElement element) {
-    waitFor.until(CommonExpectedConditions.elementNotToBeClickable(element));
-  }
-
-  public void waitForValueToBePresentInElementsAttributeByCss(String selector, String attribute,
-                                                              String value) {
-    changeImplicitWait(250, TimeUnit.MILLISECONDS);
+  public void waitForValueToBePresentInElementsAttributeByCss(
+      String selector, String attribute, String value
+  ) {
+    changeImplicitWait(IMPLICIT_SHORT, TimeUnit.MILLISECONDS);
     try {
-      waitFor.until(CommonExpectedConditions.valueToBePresentInElementsAttribute(
-          By.cssSelector(selector), attribute, value));
+      waitFor.until(CommonExpectedConditions.valueToBePresentInElementsAttribute(By.cssSelector(
+          selector), attribute, value));
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
   }
 
-  public void waitForValueToBePresentInElementsCssByCss(String selector, String cssProperty,
-                                                        String expectedValue) {
-    changeImplicitWait(250, TimeUnit.MILLISECONDS);
+  public void waitForValueToBePresentInElementsCssByCss(
+      String selector, String cssProperty, String expectedValue
+  ) {
+    changeImplicitWait(IMPLICIT_SHORT, TimeUnit.MILLISECONDS);
     try {
       waitFor.until(CommonExpectedConditions.cssValuePresentForElement(By.cssSelector(selector),
-                                                                       cssProperty, expectedValue));
+                                                                       cssProperty,
+                                                                       expectedValue
+      ));
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
   }
 
-  public void waitForValueToBePresentInElementsAttributeByElement(WebElement element,
-                                                                  String attribute, String value) {
-    waitFor.until(CommonExpectedConditions.valueToBePresentInElementsAttribute(element, attribute,
-                                                                               value));
+  public void waitForValueToBePresentInElementsAttributeByElement(
+      WebElement element, String attribute, String value
+  ) {
+    waitFor.until(CommonExpectedConditions.valueToBePresentInElementsAttribute(element,
+                                                                               attribute,
+                                                                               value
+    ));
   }
 
   public void waitForStringInURL(String givenString) {
     waitFor.until(CommonExpectedConditions.givenStringtoBePresentInURL(givenString));
-    PageObjectLogging.log("waitForStringInURL", "verify that url contains " + givenString, true);
+    Log.log("waitForStringInURL", "verify that url contains " + givenString, true);
   }
 
   public String getRandomDigits(int length) {
@@ -359,38 +469,16 @@ public class BasePageObject {
   }
 
   public void openWikiPage() {
-    getUrl(urlBuilder.getUrlForWiki(Configuration.getWikiName()) + URLsContent.NOEXTERNALS);
-    PageObjectLogging.log("WikiPageOpened", "Wiki page is opened", true);
+    getUrl(getWikiUrl() + URLsContent.NOEXTERNALS);
+    Log.log("WikiPageOpened", "Wiki page is opened", true);
   }
 
-  /*
-   * notifications methods - will be moved to other class
-   */
-  public void notifications_verifyLatestNotificationTitle(String title) {
-    notifications_showNotifications();
-    // the below method is native click which is the only way to load
-    // notification
-    notifications_clickOnNotificationsLogo();
-    wait.forElementVisible(notificationsLatestNotificationOnWiki);
-    wait.forTextInElement(notificationsLatestNotificationOnWiki, title);
-    PageObjectLogging.log("notifications_verifyNotificationTitle",
-                          "Verify that the latest notification has the following title: " + title,
-                          true, driver);
+  public String getWikiUrl() {
+    return UrlBuilder.createUrlBuilder().getUrl();
   }
 
-  public void notifications_clickOnNotificationsLogo() {
-    wait.forElementVisible(notificationsShowNotificationsLogo);
-    wait.forElementClickable(notificationsShowNotificationsLogo);
-    notificationsShowNotificationsLogo.click();
-    PageObjectLogging.log("notifications_clickOnNotificationsLogo",
-                          "click on notifications logo on the upper right corner", true, driver);
-  }
-  
-  public void notifications_showNotifications() {
-    wait.forElementVisible(notificationsShowNotificationsLogo);
-    jsActions.execute("$('#WallNotifications ul.subnav').addClass('show')");
-    PageObjectLogging.log("norifications_showNotifications",
-                          "show notifications by adding 'show' class to element", true, driver);
+  public void fillInput(WebElement input, String value) {
+    wait.forElementVisible(input).sendKeys(value);
   }
 
   /**
@@ -400,30 +488,31 @@ public class BasePageObject {
     waitFor.until(CommonExpectedConditions.newWindowPresent());
   }
 
-  public void appendToUrl(String additionToUrl) {
+  public void goToCurrentUrlWithSuffix(String additionToUrl) {
     driver.get(urlBuilder.appendQueryStringToURL(driver.getCurrentUrl(), additionToUrl));
-    PageObjectLogging.log("appendToUrl", additionToUrl + " has been appended to url", true);
+    Log.log("appendToUrl", additionToUrl + " has been appended to url", true);
   }
 
-  public void appendMultipleQueryStringsToUrl(String[] queryStrings) {
+  public void goToCurrentUrlWithAppendedMultipleQueryStrings(String[] queryStrings) {
     String currentUrl = getCurrentUrl();
-    for (int i = 0; i < queryStrings.length; i++) {
-      currentUrl = urlBuilder.appendQueryStringToURL(currentUrl, queryStrings[i]);
+    for (String queryString : queryStrings) {
+      currentUrl = urlBuilder.appendQueryStringToURL(currentUrl, queryString);
     }
     driver.get(currentUrl);
-    PageObjectLogging.log("appendToUrl", queryStrings + " have been appended to url", true);
+    Log.log("appendQueryToUrl", queryStrings + " have been appended to url", true);
   }
 
   public void pressDownArrow(WebElement element) {
-    JavascriptExecutor js = (JavascriptExecutor) driver;
-    js.executeScript("var e = jQuery.Event(\"keydown\"); "
-                     + "e.which=40; $(arguments[0]).trigger(e);", element);
+    driver.executeScript("var e = jQuery.Event(\"keydown\"); " + "e.which=40; $(arguments[0]).trigger(e);",
+                         element
+    );
   }
 
   public void setDisplayStyle(String selector, String style) {
-    JavascriptExecutor js = (JavascriptExecutor) driver;
-    js.executeScript("document.querySelector(arguments[0]).style.display = arguments[1]", selector,
-                     style);
+    driver.executeScript("document.querySelector(arguments[0]).style.display = arguments[1]",
+                         selector,
+                         style
+    );
   }
 
   private void purge(String url) throws Exception {
@@ -434,7 +523,7 @@ public class BasePageObject {
       if (status != HttpStatus.SC_OK && status != HttpStatus.SC_NOT_FOUND) {
         throw new Exception("HTTP PURGE failed for: " + url + "(" + status + ")");
       }
-      PageObjectLogging.log("purge", url, true);
+      Log.log("purge", url, true);
       return;
     } finally {
       client.close();
@@ -453,7 +542,8 @@ public class BasePageObject {
       connection.setRequestMethod("GET");
       connection.setRequestProperty("User-Agent",
                                     "Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US; rv:1.9.1.2) "
-                                    + "Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)");
+                                    + "Gecko/20090729 Firefox/3.5.2 (.NET CLR 3.5.30729)"
+      );
       int status = connection.getResponseCode();
       connection.disconnect();
       return status;
@@ -486,14 +576,18 @@ public class BasePageObject {
       }
     }
     Assertion.assertEquals(statusCode, desiredStatus);
-    PageObjectLogging.log("verifyURLStatus", url + " has status " + statusCode, true);
+    Log.log("verifyURLStatus", url + " has status " + statusCode, true);
   }
 
   protected void changeImplicitWait(int value, TimeUnit timeUnit) {
     driver.manage().timeouts().implicitlyWait(value, timeUnit);
   }
 
-  protected void restoreDeaultImplicitWait() {
+  protected void setShortImplicitWait() {
+    changeImplicitWait(IMPLICIT_SHORT, TimeUnit.SECONDS);
+  }
+
+  protected void restoreDefaultImplicitWait() {
     changeImplicitWait(timeOut, TimeUnit.SECONDS);
   }
 
@@ -504,7 +598,7 @@ public class BasePageObject {
     waitForStringInURL(url);
     driver.close();
     driver.switchTo().window(windows[0].toString());
-    PageObjectLogging.log("verifyUrlInNewWindow", "url in new window verified", true);
+    Log.log("verifyUrlInNewWindow", "url in new window verified", true);
   }
 
   public void verifyElementMoved(Point source, WebElement element) {
@@ -513,9 +607,12 @@ public class BasePageObject {
       Assertion.fail("Element did not move. Old coordinate (" + source.x + "," + source.y + ") "
                      + "New coordinate (" + target.x + "," + target.y + ")");
     }
-    PageObjectLogging.log("verifyElementMoved", "Element did move. From (" + source.x + ","
-                                                + source.y + ") to (" + target.x + "," + target.y
-                                                + ")", true, driver);
+    Log.log("verifyElementMoved",
+            "Element did move. From (" + source.x + "," + source.y + ") to (" + target.x + ","
+            + target.y + ")",
+            true,
+            driver
+    );
   }
 
   public void verifyElementResized(Dimension source, WebElement element) {
@@ -526,17 +623,113 @@ public class BasePageObject {
     int targetHeight = target.height;
 
     if (sourceWidth == targetWidth && sourceHeight == targetHeight) {
-      Assertion.fail("Element did not resize. Old dimension (" + sourceWidth + "," + sourceHeight
-                     + ") " + "New dimension (" + targetWidth + "," + targetHeight + ")");
+      Assertion.fail(
+          "Element did not resize. Old dimension (" + sourceWidth + "," + sourceHeight + ") "
+          + "New dimension (" + targetWidth + "," + targetHeight + ")");
     }
-    PageObjectLogging.log("verifyElementMoved", "Element did resize. From (" + sourceWidth + ","
-                                                + sourceHeight + ") to (" + targetWidth + ","
-                                                + targetHeight + ")", true, driver);
+    Log.log("verifyElementMoved",
+            "Element did resize. From (" + sourceWidth + "," + sourceHeight + ") to (" + targetWidth
+            + "," + targetHeight + ")",
+            true,
+            driver
+    );
   }
 
-  public void switchToNewBrowserTab() {
+  public String switchToNewBrowserTab() {
     List<String> tabs = new ArrayList<String>(driver.getWindowHandles());
     driver.switchTo().window(tabs.get(tabs.size() - 1));
+
+    return driver.getCurrentUrl();
+  }
+
+  private int getTabsCount() {
+    return driver.getWindowHandles().size();
+  }
+
+  private String getNewTab(String parentTab) {
+    Optional<String> newTab = driver.getWindowHandles()
+        .stream()
+        .filter(handleName -> !handleName.equals(parentTab))
+        .findFirst();
+    return newTab.orElseThrow(() -> new NotFoundException("New tab not found!"));
+  }
+
+  private String switchToNewTab(String parentTab) {
+    String newTab = getNewTab(parentTab);
+    driver.switchTo().window(newTab);
+    return newTab;
+  }
+
+  private String getTabWithTitle(String title) {
+    return getTabWithCondition(nameToTitle -> nameToTitle.getValue().startsWith(title));
+  }
+
+  private String getOtherTab(String title) {
+    return getTabWithCondition(nameToTitle -> !nameToTitle.getValue().startsWith(title));
+  }
+
+  private String getTabWithCondition(
+      java.util.function.Predicate<? super Pair<String, String>> condition
+  ) {
+    Optional<String> newTab = driver.getWindowHandles()
+        .stream()
+        .map(handleName -> Pair.of(handleName, driver.switchTo().window(handleName).getTitle()))
+        .peek(handleTitle -> Log.log("Found window",
+                                     String.format("Window with title %s", handleTitle),
+                                     true
+        ))
+        .filter(condition)
+        .map(Pair::getKey)
+        .findFirst();
+    return newTab.orElseThrow(() -> new NotFoundException(
+        "Tab that satisfies the condition doesn't exist"));
+  }
+
+  public WebDriver switchToWindowWithTitle(String title) {
+    Log.log("Switching windows", String.format("Switching to window with title: %s", title), true);
+    return driver.switchTo().window(getTabWithTitle(title));
+  }
+
+  public WebDriver switchAwayFromWindowWithTitle(String title) {
+    Log.log("Switching windows",
+            String.format("Switching away from window with title: %s", title),
+            true
+    );
+    return driver.switchTo().window(getOtherTab(title));
+  }
+
+  public WebDriver switchToMainWindow() {
+    return driver.switchTo().defaultContent();
+  }
+
+  private void waitForLinkOpenedInNewTab(WebElement link) {
+    int initialTabsNumber = driver.getWindowHandles().size();
+    link.click();
+    new WebDriverWait(driver,
+                      TIMEOUT_PAGE_REGISTRATION
+    ).until((Function<WebDriver, Boolean>) input -> getTabsCount() > initialTabsNumber);
+  }
+
+  protected void openLinkInNewTab(WebElement link) {
+    String currentTab = driver.getWindowHandle();
+    waitForLinkOpenedInNewTab(link);
+    switchToNewTab(currentTab);
+  }
+
+  private List<String> getTabUrls() {
+    String currentTab = driver.getWindowHandle();
+    List<String> result = new ArrayList<>();
+    for (String windowHandler : driver.getWindowHandles()) {
+      driver.switchTo().window(windowHandler);
+      result.add(driver.getCurrentUrl());
+    }
+
+    driver.switchTo().window(currentTab);
+    return result;
+  }
+
+  public boolean tabContainsUrl(String url) {
+    return getTabUrls().contains(url);
   }
 
   public int getElementBottomPositionByCssSelector(String elementName) {
@@ -551,4 +744,19 @@ public class BasePageObject {
     return element.getLocation().getY();
   }
 
+  public void enterEmailChangeLink(String email, String password) {
+    getUrl(getEmailChangeConfirmationLink(email, password));
+  }
+
+  public boolean isVisible(WebElement element) {
+    boolean result;
+    try {
+      wait.forElementVisible(element);
+      result = true;
+    } catch (TimeoutException e) {
+      Log.info("Element: " + element.toString() + " not found.", e);
+      result = false;
+    }
+    return result;
+  }
 }

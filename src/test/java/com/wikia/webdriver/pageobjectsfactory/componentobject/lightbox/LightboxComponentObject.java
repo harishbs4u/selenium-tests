@@ -1,11 +1,11 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.lightbox;
 
-import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.media.VideoComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.special.filepage.FilePage;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
@@ -21,7 +21,7 @@ public class LightboxComponentObject extends WikiBasePageObject {
   private WebElement imageThumbnail;
   @FindBy(css = "#LightboxModal")
   private WebElement lightBoxModal;
-  @FindBy(css = "span[data-pinned-title='Unpin top and bottom bars']")
+  @FindBy(css = "span.pin")
   private WebElement pinButton;
   @FindBy(css = ".WikiaLightbox .share")
   private WebElement shareScreen;
@@ -33,8 +33,6 @@ public class LightboxComponentObject extends WikiBasePageObject {
   private WebElement facebookShareLink;
   @FindBy(css = "a.twitter")
   private WebElement twitterShareLink;
-  @FindBy(css = "a.stumbleupon")
-  private WebElement stumbleUponShareLink;
   @FindBy(css = "a.reddit")
   private WebElement redditShareLink;
   @FindBy(css = "a.plusone")
@@ -47,14 +45,14 @@ public class LightboxComponentObject extends WikiBasePageObject {
   private WebElement moreInfoLink;
   @FindBy(css = ".WikiaLightbox div.media img")
   private WebElement imageContainer;
-  @FindBy(css = "span.carousel-arrow.next")
+  @FindBy(css = "span.arrow.next")
   private WebElement carouselRight;
-  @FindBy(css = "span.carousel-arrow.previous:not(.disabled)")
+  @FindBy(css = "span.arrow.previous:not(.disabled)")
   private WebElement carouselLeft;
-  @FindBy(css = "span.carousel-arrow.previous.disabled")
-  private WebElement carouselLeftDisabled;
   @FindBy(css = "button.more-info-close")
   private WebElement closeShareScreenButton;
+
+  private By carouselLeftDisabled = new By.ByCssSelector("span.arrow.previous.disabled");
 
   public LightboxComponentObject(WebDriver driver) {
     super();
@@ -62,23 +60,23 @@ public class LightboxComponentObject extends WikiBasePageObject {
 
   public void verifyLightboxPopup() {
     wait.forElementVisible(lightBoxModal);
-    PageObjectLogging.log("verifyLightboxPopup", "Lightbox appeared", true);
+    Log.log("verifyLightboxPopup", "Lightbox appeared", true);
   }
 
   public void verifyLightboxVideo() {
     wait.forElementVisible(videoContainer);
-    PageObjectLogging.log("verifyLightboxVideo", "Lightbox video appeared", true);
+    Log.log("verifyLightboxVideo", "Lightbox video appeared", true);
   }
 
   public void verifyLightboxImage() {
     wait.forElementVisible(imageContainer);
-    PageObjectLogging.log("verifyLightboxImage", "Lightbox image appeared", true);
+    Log.log("verifyLightboxImage", "Lightbox image appeared", true);
   }
 
   public LightboxComponentObject openLightbox() {
     wait.forElementVisible(imageThumbnail);
     scrollAndClick(imageThumbnail);
-    PageObjectLogging.log("openLightbox", "opened ligthbox", true);
+    Log.log("openLightbox", "opened ligthbox", true);
     return new LightboxComponentObject(driver);
   }
 
@@ -90,7 +88,7 @@ public class LightboxComponentObject extends WikiBasePageObject {
   public void clickCloseButton() {
     wait.forElementVisible(closeModalButton);
     scrollAndClick(closeModalButton);
-    PageObjectLogging.log("clickCloseButton ", "lightbox closed", true);
+    Log.log("clickCloseButton ", "lightbox closed", true);
   }
 
   public void clickPinButton() {
@@ -98,103 +96,83 @@ public class LightboxComponentObject extends WikiBasePageObject {
         click(pinButton).
         build().
         perform();
-    PageObjectLogging.log("clickPinButton", "pin button was clicked", true);
+    Log.log("clickPinButton", "pin button was clicked", true);
   }
 
   public void clickShareButton() {
     wait.forElementVisible(shareButton);
     shareButton.click();
     wait.forElementVisible(moreInfoThumbnail);
-    PageObjectLogging.log("clickShareButton", "share button is clicked", true);
+    Log.log("clickShareButton", "share button is clicked", true);
   }
 
   public void clickCloseShareScreenButton() {
     wait.forElementVisible(closeShareScreenButton);
     closeShareScreenButton.click();
-    PageObjectLogging
-        .log("clickCloseShareScreenButton", "close share screen button was clicked", true);
+    Log.log("clickCloseShareScreenButton", "close share screen button was clicked", true);
   }
 
   public void verifyShareScreenClosed() {
     waitForElementNotVisibleByElement(shareScreen);
-    PageObjectLogging.log("verifyShareScreenClosed", "share screen is closed", true);
+    Log.log("verifyShareScreenClosed", "share screen is closed", true);
   }
 
   public void verifyLightboxClosed() {
     waitForElementNotVisibleByElement(lightBoxModal);
-    PageObjectLogging.log("verifyShareScreenClosed", "share lightbox is closed", true);
+    Log.log("verifyShareScreenClosed", "share lightbox is closed", true);
   }
 
   public void verifyShareButtons() {
     wait.forElementVisible(plusoneShareLink);
     wait.forElementVisible(redditShareLink);
-    wait.forElementVisible(stumbleUponShareLink);
     wait.forElementVisible(twitterShareLink);
     wait.forElementVisible(facebookShareLink);
-    PageObjectLogging.log("verifyShareButtons", "all share buttons are visible", true);
+    Log.log("verifyShareButtons", "all share buttons are visible", true);
   }
 
   public void clickFacebookShareButton() {
     facebookShareLink.click();
-    PageObjectLogging.log("clickFacebookShareButton", "fb share button is clicked", true);
+    Log.log("clickFacebookShareButton", "fb share button is clicked", true);
   }
 
   public void clickTwitterShareButton() {
     twitterShareLink.click();
-    PageObjectLogging.log("clickTwitterShareButton", "twitter share button is clicked", true);
-  }
-
-  public void clickStumbleUponShareButton() {
-    stumbleUponShareLink.click();
-    PageObjectLogging
-        .log("clickStumbleUponShareButton", "stumbleupon share button is clicked", true);
+    Log.log("clickTwitterShareButton", "twitter share button is clicked", true);
   }
 
   public void clickRedditShareButton() {
     redditShareLink.click();
-    PageObjectLogging.log("clickRedditShareButton", "reddit share button is clicked", true);
+    Log.log("clickRedditShareButton", "reddit share button is clicked", true);
   }
 
   public void clickPlusOneShareButton() {
     plusoneShareLink.click();
-    PageObjectLogging.log("clickPlusOneShareButton", "plus one share button is clicked", true);
-  }
-
-  public void verifyTitleUrl(String expectedUrl) {
-    String titleUrl = titleLink.getAttribute("href");
-    Assertion.assertEquals(titleUrl, expectedUrl);
-    PageObjectLogging.log("verifyTitleUrl", "Title URL is correct", true);
+    Log.log("clickPlusOneShareButton", "plus one share button is clicked", true);
   }
 
   public FilePage clickTitle() {
     new Actions(driver).moveToElement(titleLink).perform();
     wait.forElementVisible(titleLink);
     titleLink.click();
-    PageObjectLogging.log("clickTitleUrl", "Title url is clicked", true);
+    Log.log("clickTitleUrl", "Title url is clicked", true);
     return new FilePage();
-  }
-
-  public void verifyMoreInfoUrl(String expectedUrl) {
-    String moreInfoUrl = moreInfoLink.getAttribute("href");
-    Assertion.assertEquals(moreInfoUrl, expectedUrl);
-    PageObjectLogging.log("verifyMoreInfoUrl", "More Info URL is correct", true);
   }
 
   public void clickCarouselRight() {
     wait.forElementVisible(carouselRight);
     carouselRight.click();
-    PageObjectLogging.log("clickCarouselRight", "carousel right button is clicked", true);
+    Log.log("clickCarouselRight", "carousel right button is clicked", true);
   }
 
   public void clickCarouselLeft() {
     wait.forElementVisible(carouselLeft);
     carouselLeft.click();
-    PageObjectLogging.log("clickCarouselLeft", "carousel left button is clicked", true);
+    Log.log("clickCarouselLeft", "carousel left button is clicked", true);
   }
 
   public void verifyCarouselLeftDisabled() {
-    wait.forElementVisible(carouselLeftDisabled);
-    PageObjectLogging.log("verifyCarouselLeftDisabled", "carousel left button is disabled", true);
+    wait.forElementPresent(carouselLeftDisabled);
+    Log.log("verifyCarouselLeftDisabled", "carousel left button is disabled", true);
   }
 
   public void verifyVideoAutoplay(String providerName) {
@@ -205,5 +183,4 @@ public class LightboxComponentObject extends WikiBasePageObject {
   public VideoComponentObject getVideoPlayer() {
     return new VideoComponentObject(driver, videoContainer, VIDEO_WIDTH_LIGHTBOX);
   }
-
 }

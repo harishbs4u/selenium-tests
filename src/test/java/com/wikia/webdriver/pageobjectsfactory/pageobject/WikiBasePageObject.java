@@ -1,102 +1,100 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject;
 
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import lombok.Getter;
-
-import org.joda.time.DateTime;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Cookie;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriverException;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-
-import com.wikia.webdriver.common.contentpatterns.ApiActions;
 import com.wikia.webdriver.common.contentpatterns.PageContent;
 import com.wikia.webdriver.common.contentpatterns.URLsContent;
 import com.wikia.webdriver.common.contentpatterns.WikiaGlobalVariables;
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.core.CommonUtils;
 import com.wikia.webdriver.common.core.Helios;
-import com.wikia.webdriver.common.core.MailFunctions;
 import com.wikia.webdriver.common.core.configuration.Configuration;
 import com.wikia.webdriver.common.core.helpers.User;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
-import com.wikia.webdriver.elements.mercury.components.TopBar;
-import com.wikia.webdriver.elements.mercury.components.signup.RegisterArea;
-import com.wikia.webdriver.elements.mercury.pages.login.RegisterPage;
-import com.wikia.webdriver.elements.mercury.pages.login.SignInPage;
-import com.wikia.webdriver.elements.oasis.components.globalshortcuts.ActionExplorerModal;
-import com.wikia.webdriver.elements.oasis.components.globalshortcuts.KeyboardShortcutsModal;
-import com.wikia.webdriver.elements.oasis.components.notifications.BannerNotifications;
-import com.wikia.webdriver.elements.oasis.components.wikiabar.WikiaBar;
-import com.wikia.webdriver.pageobjectsfactory.componentobject.AuthModal;
+import com.wikia.webdriver.common.logging.Log;
+import com.wikia.webdriver.elements.communities.desktop.components.globalshortcuts.ActionExplorerModal;
+import com.wikia.webdriver.elements.communities.desktop.components.globalshortcuts.KeyboardShortcutsModal;
+import com.wikia.webdriver.elements.communities.desktop.components.navigation.global.GlobalNavigation;
+import com.wikia.webdriver.elements.communities.desktop.components.notifications.Notification;
+import com.wikia.webdriver.elements.communities.desktop.components.notifications.NotificationType;
+import com.wikia.webdriver.elements.communities.desktop.components.wikiabar.WikiaBar;
+import com.wikia.webdriver.elements.communities.mobile.components.navigation.global.GlobalNavigationMobile;
+import com.wikia.webdriver.elements.communities.mobile.components.navigation.local.CommunityBarMobile;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.actions.DeletePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.actions.RenamePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.article.ArticlePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.article.editmode.SourceEditModePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.article.editmode.VisualEditModePageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.createnewwiki.CreateNewWikiPageObjectStep1;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.forumpageobject.ForumPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.globalnav.GlobalNavigation;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.auth.register.AttachedRegisterPage;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.auth.signin.AttachedSignInPage;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.forumpageobject.ForumPage;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.historypage.HistoryPagePageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.signup.SignUpPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.signup.UserProfilePageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.SpecialCreatePage;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.SpecialEditHubPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.SpecialMultipleUploadPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.SpecialNewFilesPage;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.SpecialPromotePageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.SpecialUploadPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.SpecialVideosPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.SpecialWhatLinksHerePageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.interactivemaps.InteractiveMapPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.interactivemaps.InteractiveMapsPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.login.SpecialUserLoginPageObject;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.notifications.NotificationsDropdown;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.special.*;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.special.multiwikifinder.SpecialMultiWikiFinderPageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.special.preferences.PreferencesPageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.special.watch.WatchPageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.visualeditor.VisualEditorPageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.wikipage.WikiHistoryPageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.wikipage.blog.BlogPageObject;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.wikipage.blog.BlogPage;
+import lombok.Getter;
+import org.apache.commons.lang3.Range;
+import org.joda.time.DateTime;
+import org.openqa.selenium.*;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.FindBys;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
 
 public class WikiBasePageObject extends BasePageObject {
 
+  public static class AssertionMessages {
+
+    public static final String INVALID_NUMBER_OF_CONFIRMING_NOTIFICATIONS =
+            "Number of action confirming notifications is invalid";
+    public static final String BANNER_NOTIFICATION_NOT_VISIBLE = "Banner notification message is not visible";
+
+    private AssertionMessages() {
+      throw new IllegalAccessError("Utility class");
+    }
+  }
   private static final String LOGGED_IN_USER_SELECTOR_OASIS =
-      ".AccountNavigation a[title*=%userName%]";
-  private static final By MERCURY_SKIN = By.cssSelector("#ember-container");
-  private static final By MERCURY_NAV_ICON = By.cssSelector(".site-head .site-head-icon-nav");
+      ".wds-global-navigation__user-logged-in .wds-avatar svg, "
+          + ".wds-global-navigation__user-logged-in .wds-avatar img";
+
+  private static final By MERCURY_SKIN = By.cssSelector(".mobile-wiki");
   private static final String LOGGED_IN_USER_SELECTOR_MERCURY =
-      ".wikia-nav__avatar img[alt*=%userName%]";
+      ".wds-global-navigation__modal-control-user div.wds-avatar[title=%userName%], .wds-global-navigation__modal-control-user div.wds-avatar img[alt=%userName%], .wds-global-navigation__modal-control-user div.wds-avatar svg[alt=%userName%]";
+  private static final By BANNER_NOTIFICATION_CONTAINER = By.cssSelector(".banner-notifications-placeholder,.smart-banner");
+  private static final By BANNER_NOTIFICATION = By.cssSelector(".banner-notifications-placeholder div div");
+  private static final By RECIRCULATION_PREFOOTER = By.cssSelector(".recirculation-prefooter");
+  private static final By RECIRCULATION_PREFOOTER_FULFILLED = By.cssSelector(".recirculation-prefooter.has-items");
+
+  @FindBy(css = ".banner-notifications-placeholder,.smart-banner")
+  private WebElement bannerNotificationContainer;
   @Getter(lazy = true)
   private final GlobalNavigation globalNavigation = new GlobalNavigation();
   @Getter(lazy = true)
   private final WikiaBar wikiaBar = new WikiaBar();
   @Getter(lazy = true)
+  private final NotificationsDropdown notificationsDropdown = new NotificationsDropdown();
+  @Getter(lazy = true)
   private final KeyboardShortcutsModal keyboardShortcuts = new KeyboardShortcutsModal();
   @Getter(lazy = true)
   private final ActionExplorerModal actionExplorer = new ActionExplorerModal();
   @Getter(lazy = true)
-  private final TopBar topBar = new TopBar(driver);
+  private final GlobalNavigationMobile globalNavigationMobile = new GlobalNavigationMobile();
   @Getter(lazy = true)
-  private final AuthModal authModal = new AuthModal();
-  @Getter(lazy = true)
-  private final RegisterArea registerArea = new RegisterArea(true);
-  @Getter(lazy = true)
-  private final BannerNotifications bannerNotifications = new BannerNotifications();
+  private final CommunityBarMobile communityBarMobile = new CommunityBarMobile();
+
   @FindBy(css = "body")
   protected WebElement body;
-  @FindBy(css = "#WikiaPageHeader h1")
-  protected WebElement wikiFirstHeader;
-  @FindBy(css = "a[data-id='logout']")
-  protected WebElement navigationLogoutLink;
-  @FindBy(css = "#WikiaMainContent a[data-id='edit']")
+  @FindBy(css = "#PageHeader .page-header__title")
+  protected WebElement articleTitle;
+  @FindBy(css = "#ca-edit")
   protected WebElement editButton;
   @FindBy(css = "ul#pagehistory > li:first-child .comment")
   protected WebElement cssEditSummary;
@@ -104,7 +102,7 @@ public class WikiBasePageObject extends BasePageObject {
   protected WebElement cssMinorEdit;
   @FindBy(css = "#ca-watch")
   protected WebElement followButton;
-  @FindBy(css = "#WikiaMainContent .drop img")
+  @FindBy(css = ".page-header__contribution-buttons .wds-button-group .wds-dropdown")
   protected WebElement articleEditDropdown;
   @FindBy(css = "#ca-delete")
   protected WebElement deleteDropdown;
@@ -128,217 +126,209 @@ public class WikiBasePageObject extends BasePageObject {
   protected WebElement veToolMenu;
   @FindBy(css = "h3[id='headerWikis']")
   protected WebElement headerWhereIsMyExtensionPage;
+  @FindBy(css = "#globalNavigation,.site-head.no-shadow,.wds-global-navigation")
+  protected WebElement navigationBar;
   @FindBy(css = "#globalNavigation")
   protected WebElement newGlobalNavigation;
-  @FindBy(css = "#mw-content-text .wikia-button-facebook")
-  protected WebElement formConnectWithFbButtonBasic;
+  @FindBy(css = "#facebook-connect-button")
+  protected WebElement facebookConnectButton;
+  @FindBy(css = "#googleConnectPreferences .google-button")
+  protected WebElement googleConnectButton;
   protected By editButtonBy = By.cssSelector("#WikiaMainContent a[data-id='edit']");
   protected By parentBy = By.xpath("./..");
   protected String modalWrapper = "#WikiaConfirm";
-  @FindBy(css = ".banner-notification")
-  private WebElement bannerNotification;
-  @FindBy(css = "#WikiaArticle a[href*='Special:UserLogin']")
+  @FindBys(@FindBy(css = ".wds-banner-notification"))
+  private List<WebElement> notificationElements;
+  //TODO: Remove szl part of the selector when szl tests are not needed
+  @FindBy(css = "#WikiaArticle a[href*='Special:UserLogin'], a[href*='Specjalna:Zaloguj']")
   private WebElement specialUserLoginLink;
-  @FindBy(css = ".avatar-container")
+  @FindBy(css = ".wds-dropdown__toggle .wds-avatar")
   private WebElement globalNavigationAvatar;
-  @FindBy(css = "#WikiaFooter")
+  @FindBy(css = ".wds-global-footer__header,.wds-global-footer-wikia-org__header")
   private WebElement footer;
-  @FindBy(css = "#globalNavigation")
+  @FindBy(css = ".wds-global-navigation")
   private WebElement globalNavigationBar;
+  @FindBy(css = ".wds-global-navigation__modal-control-anon")
+  private WebElement mobileAnonAvatarPlaceholder;
 
   public String getWikiUrl() {
     String currentURL = driver.getCurrentUrl();
-    return currentURL.substring(0, currentURL.lastIndexOf("wiki/"));
+    return currentURL.substring(0, currentURL.lastIndexOf("/wiki/"));
   }
 
-  public String resetForgotPasswordTime(String userName, String apiToken) {
-    String[][] apiRequestParameters = {{"action", ApiActions.API_ACTION_FORGOT_PASSWORD},
-        {"user", userName}, {"token", apiToken}, {"format", "json"},};
-    return CommonUtils.sendPost(URLsContent.API_URL, apiRequestParameters);
+  public boolean isBannerNotificationContainerPresent(){
+    return isElementOnPage(BANNER_NOTIFICATION_CONTAINER);
+  }
+
+  public int getBannerNotificationsHeight(){
+    return bannerNotificationContainer.getSize().getHeight();
+  }
+
+  public int getNavigationBarOffsetFromTop() {
+    return Integer.parseInt(navigationBar.getAttribute("offsetTop")) + navigationBar.getSize().height;
   }
 
   public HistoryPagePageObject openFileHistoryPage(String articlePage, String wikiURL) {
     getUrl(urlBuilder.appendQueryStringToURL(
         wikiURL + URLsContent.WIKI_DIR + URLsContent.FILE_NAMESPACE + articlePage,
         URLsContent.ACTION_HISTORY));
-    PageObjectLogging.log("openFileHistoryPage", "history page opened", true);
-    return new HistoryPagePageObject(driver);
+    Log.log("openFileHistoryPage", "history page opened", true);
+    return new HistoryPagePageObject();
   }
 
-  public RegisterPage openSpecialUserSignUpPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_USER_SIGNUP);
-    PageObjectLogging.log("openSpecialUserSignUpPage", "Special:UserSignup page opened", true);
-    return new RegisterPage(driver);
-  }
-
-  public SignUpPageObject navigateToSpecialSignUpPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_USER_SIGNUP);
-    return new SignUpPageObject(driver);
+  public AttachedRegisterPage openUserSignUpPage(String wikiURL) {
+    AttachedRegisterPage registerPage = new AttachedRegisterPage().open(wikiURL);
+    Log.log("openUserSignUpPage", "Special:UserSignup page opened", true);
+    return registerPage;
   }
 
   public PreferencesPageObject openSpecialPreferencesPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_PREFERENCES);
-    PageObjectLogging.log("openSpecialPreferencesPage", "Special:Prefereces page opened", true);
-    return new PreferencesPageObject(driver);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_PREFERENCES);
+    Log.log("openSpecialPreferencesPage", "Special:Prefereces page opened", true);
+    return new PreferencesPageObject();
   }
 
-  public SpecialPromotePageObject openSpecialPromotePage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_PROMOTE);
-    PageObjectLogging.log("openSpecialPromotePage", "Special:Promote page opened", true);
-    return new SpecialPromotePageObject(driver);
+  public AttachedSignInPage openUserLoginPage(String wikiURL) {
+    AttachedSignInPage signInPage = new AttachedSignInPage().open(wikiURL);
+    Log.log("openUserLoginPage", "Signup page opened", true);
+    return signInPage;
   }
 
-  public SpecialUserLoginPageObject openSpecialUserLoginOld(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_USER_LOGIN);
-    PageObjectLogging.log("openSpecialUserLoginOld", "Special:UserLogin page opened", true);
-    return new SpecialUserLoginPageObject(driver);
-  }
-
-  public SignInPage openSpecialUserLogin(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_USER_LOGIN);
-    PageObjectLogging.log("openSpecialUserLogin", "Special:UserLogin page opened", true);
-    return new SignInPage(driver);
-  }
-
-  public UserProfilePageObject openProfilePage(String userName, String wikiURL) {
-    getUrl(wikiURL + URLsContent.USER_PROFILE.replace("%userName%", userName));
-    return new UserProfilePageObject(driver);
+  public UserProfilePage openProfilePage(String userName, String wikiURL) {
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.USER_PROFILE.replace("%userName%", userName));
+    return new UserProfilePage();
   }
 
   public SpecialVideosPageObject openSpecialVideoPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_VIDEOS);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_VIDEOS);
     return new SpecialVideosPageObject(driver);
   }
 
-  public SpecialVideosPageObject openSpecialVideoPage(String wikiURL, String queryString) {
-    String url =
-        urlBuilder.appendQueryStringToURL(wikiURL + URLsContent.SPECIAL_VIDEOS, queryString);
-    getUrl(url);
-    return new SpecialVideosPageObject(driver);
+  public SpecialVideosPageObject openSpecialVideoPage() {
+    return openSpecialVideoPage(getWikiUrl());
   }
 
   public SpecialVideosPageObject openSpecialVideoPageMostRecent(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_VIDEOS + URLsContent.MOST_RECENT);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_VIDEOS + URLsContent.MOST_RECENT);
     return new SpecialVideosPageObject(driver);
   }
 
   public SpecialNewFilesPage openSpecialNewFiles(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_NEW_FILES);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_NEW_FILES);
     return new SpecialNewFilesPage();
   }
 
+  public SpecialNewFilesPage openSpecialNewFiles() {
+    return openSpecialNewFiles(getWikiUrl() + URLsContent.WIKI_DIR + URLsContent.SPECIAL_NEW_FILES);
+  }
+
   public SpecialUploadPageObject openSpecialUpload(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_UPLOAD);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_UPLOAD);
     return new SpecialUploadPageObject(driver);
   }
 
+  public SpecialUploadPageObject openSpecialUpload() {
+    return openSpecialUpload(getWikiUrl());
+  }
+
   public SpecialCreatePage openSpecialCreateBlogPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_CREATE_BLOGPAGE);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_CREATE_BLOGPAGE);
     return new SpecialCreatePage();
   }
 
-  public ForumPageObject openForumMainPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_FORUM);
-    PageObjectLogging.log("openForumPage", "forum page opened", true);
-    return new ForumPageObject(driver);
+  public ForumPage openForumMainPage(String wikiURL) {
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_FORUM);
+    Log.log("openForumPage", "forum page opened", true);
+    return new ForumPage();
   }
 
   public SpecialMultiWikiFinderPageObject openSpecialMultiWikiFinderPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_MULTI_WIKI_FINDER);
-    PageObjectLogging.log("openSpecialMultiWikiFinderPage",
-        "Special MultiWikiFinder page was opened", true);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_MULTI_WIKI_FINDER);
+    Log.log("openSpecialMultiWikiFinderPage",
+                          "Special MultiWikiFinder page was opened", true);
     return new SpecialMultiWikiFinderPageObject(driver);
   }
 
   public SpecialMultipleUploadPageObject openSpecialMultipleUpload(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_MULTIPLE_UPLOAD);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_MULTIPLE_UPLOAD);
     return new SpecialMultipleUploadPageObject(driver);
   }
 
-  public InteractiveMapsPageObject openSpecialInteractiveMaps(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_MAPS);
-    return new InteractiveMapsPageObject();
-  }
-
-  public SpecialWhatLinksHerePageObject openSpecialWhatLinksHere(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_WHAT_LINKS_HERE);
-    return new SpecialWhatLinksHerePageObject(driver);
-  }
-
-  public InteractiveMapPageObject openInteractiveMapById(String wikiURL, Integer id) {
-    getUrl(wikiURL + URLsContent.SPECIAL_MAPS + "/" + id);
-    return new InteractiveMapPageObject();
-  }
-
-  public CreateNewWikiPageObjectStep1 openSpecialCreateNewWikiPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_CREATE_NEW_WIKI);
-    return new CreateNewWikiPageObjectStep1(driver);
-  }
-
   public void openSpecialWatchListPage(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_WATCHLIST);
-  }
-
-  public SpecialEditHubPageObject openSpecialEditHub(String wikiURL) {
-    getUrl(wikiURL + URLsContent.SPECIAL_EDIT_HUB);
-    return new SpecialEditHubPageObject(driver);
+    getUrl(wikiURL + URLsContent.WIKI_DIR + URLsContent.SPECIAL_WATCHLIST);
   }
 
   public SourceEditModePageObject openCurrectArticleSourceMode() {
     String queryStrings[] = {URLsContent.ACTION_EDIT, URLsContent.SOURCE_MODE};
-    appendMultipleQueryStringsToUrl(queryStrings);
-    return new SourceEditModePageObject(driver);
+    goToCurrentUrlWithAppendedMultipleQueryStrings(queryStrings);
+    return new SourceEditModePageObject();
   }
 
   public SourceEditModePageObject openSrcModeWithMainEditButton() {
-    wait.forElementVisible(editButton);
+    wait.forElementClickable(editButton);
     editButton.click();
-    PageObjectLogging.log("openSrcModeWithMainEditButton", "Src main edit button clicked", true,
+    Log.log("openSrcModeWithMainEditButton", "Src main edit button clicked", true,
         driver);
-    return new SourceEditModePageObject(driver);
+    return new SourceEditModePageObject();
+  }
+
+  protected SourceEditModePageObject openSrcModeWithMainEditButtonDropdown() {
+    this.openArticleEditDropdown();
+    editButton.click();
+    Log.log("openSrcModeWithMainEditButton", "Src main edit button clicked", true,
+                          driver);
+    return new SourceEditModePageObject();
   }
 
   public VisualEditModePageObject openCKModeWithMainEditButton() {
-    wait.forElementVisible(editButton);
+    this.openArticleEditDropdown();
     editButton.click();
-    PageObjectLogging.log("openCKModeWithMainEditButton", "CK main edit button clicked", true,
+    Log.log("openCKModeWithMainEditButton", "CK main edit button clicked", true,
         driver);
     return new VisualEditModePageObject();
   }
 
+  public VisualEditModePageObject openCKModeWithMainEditButtonDropdown() {
+    this.openArticleEditDropdown();
+    editButton.click();
+    Log.log("openCKModeWithMainEditButton", "CK main edit button clicked", true,
+                          driver);
+    return new VisualEditModePageObject();
+  }
+
   public VisualEditorPageObject openVEModeWithMainEditButton() {
-    wait.forElementVisible(veEditButton);
+    wait.forElementClickable(veEditButton);
     veEditButton.click();
-    PageObjectLogging.log("openVEModeWithMainEditButton", "VE main edit button clicked", true,
+    Log.log("openVEModeWithMainEditButton", "VE main edit button clicked", true,
         driver);
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   public VisualEditorPageObject openVEModeWithSectionEditButton(int section) {
     WebElement sectionEditButton = sectionEditButtons.get(section);
     wait.forElementClickable(sectionEditButton);
     sectionEditButton.click();
-    PageObjectLogging.log("openVEModeWithSectionEditButton",
+    Log.log("openVEModeWithSectionEditButton",
         "VE edit button clicked at section: " + section, true, driver);
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
-  public VisualEditModePageObject openCKModeWithSectionEditButton(int section) {
+  protected VisualEditModePageObject openCKModeWithSectionEditButton(int section) {
     WebElement sectionEditButton = sectionEditButtons.get(section);
     wait.forElementVisible(sectionEditButton);
     sectionEditButton.click();
-    PageObjectLogging.log("openCKModeWithSectionEditButton",
-        "RTE edit button clicked at section: " + section, true, driver);
+    Log.log("openCKModeWithSectionEditButton",
+                          "RTE edit button clicked at section: " + section, true, driver);
     return new VisualEditModePageObject();
   }
 
-  public SourceEditModePageObject openSrcModeWithSectionEditButton(int section) {
+  protected SourceEditModePageObject openSrcModeWithSectionEditButton(int section) {
     WebElement sectionEditButton = sectionEditButtons.get(section);
     wait.forElementVisible(sectionEditButton);
     sectionEditButton.click();
-    PageObjectLogging.log("openSrcModeWithSectionEditButton",
-        "Src edit button clicked at section: " + section, true, driver);
-    return new SourceEditModePageObject(driver);
+    Log.log("openSrcModeWithSectionEditButton",
+                          "Src edit button clicked at section: " + section, true, driver);
+    return new SourceEditModePageObject();
   }
 
   public VisualEditModePageObject navigateToArticleEditPage() {
@@ -355,14 +345,16 @@ public class WikiBasePageObject extends BasePageObject {
   public SourceEditModePageObject navigateToArticleEditPageSrc(String wikiURL, String article) {
     getUrl(urlBuilder.appendQueryStringToURL(wikiURL + URLsContent.WIKI_DIR + article,
         URLsContent.ACTION_EDIT));
-    return new SourceEditModePageObject(driver);
+    return new SourceEditModePageObject();
   }
 
   public VisualEditModePageObject goToArticleDefaultContentEditPage(String wikiURL,
       String article) {
     getUrl(urlBuilder.appendQueryStringToURL(urlBuilder
-        .appendQueryStringToURL(wikiURL + URLsContent.WIKI_DIR + article, URLsContent.ACTION_EDIT),
-        URLsContent.USE_DEFAULT_FORMAT));
+                                                 .appendQueryStringToURL(
+                                                     wikiURL + URLsContent.WIKI_DIR + article,
+                                                     URLsContent.ACTION_EDIT),
+                                             URLsContent.USE_DEFAULT_FORMAT));
     return new VisualEditModePageObject();
   }
 
@@ -371,55 +363,98 @@ public class WikiBasePageObject extends BasePageObject {
    */
   public VisualEditorPageObject openVEOnArticle(String wikiURL, String article) {
     getUrl(urlBuilder.appendQueryStringToURL(wikiURL + URLsContent.WIKI_DIR + article,
-        URLsContent.VEACTION_EDIT));
-    return new VisualEditorPageObject(driver);
+                                             URLsContent.VEACTION_EDIT));
+    return new VisualEditorPageObject();
   }
 
   public void verifyUserLoggedIn(final String userName) {
-    changeImplicitWait(0, TimeUnit.MILLISECONDS);
+    changeImplicitWait(IMPLICIT_SHORT, TimeUnit.MILLISECONDS);
     try {
       if (driver.findElements(By.cssSelector("#PreviewFrame")).size() > 0) {
         driver.switchTo().frame("PreviewFrame");
       }
-      // open nav if on mercury, required to see login data
       if (driver.findElements(MERCURY_SKIN).size() > 0) {
-        wait.forElementClickable(MERCURY_NAV_ICON);
-        driver.findElement(MERCURY_NAV_ICON).click();
         wait.forElementVisible(By.cssSelector(
             LOGGED_IN_USER_SELECTOR_MERCURY.replace("%userName%", userName.replace(" ", "_"))));
-        // close nav on mercury
-        wait.forElementClickable(MERCURY_NAV_ICON);
-        driver.findElement(MERCURY_NAV_ICON).click();
       } else {
-        wait.forElementVisible(By.cssSelector(
-            LOGGED_IN_USER_SELECTOR_OASIS.replace("%userName%", userName.replace(" ", "_"))));
+        WebElement avatar = wait.forElementPresent(By.cssSelector(LOGGED_IN_USER_SELECTOR_OASIS));
+        String loggedInUserName = avatar.getAttribute("alt");
+        if (!loggedInUserName.equals(userName) && !loggedInUserName.equals(userName + " avatar")) {
+          throw new IllegalArgumentException(
+              "Invalid user, expected " + userName + ", but found: " + loggedInUserName);
+        }
       }
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
       driver.switchTo().defaultContent();
     }
-    PageObjectLogging.log("verifyUserLoggedIn", "user " + userName + " logged in", true);
+    Log.log("verifyUserLoggedIn", "user " + userName + " logged in", true);
+  }
+
+  public boolean isUserLoggedIn(final String userName) {
+    changeImplicitWait(IMPLICIT_SHORT, TimeUnit.MILLISECONDS);
+    try {
+      if (driver.findElements(By.cssSelector("#PreviewFrame")).size() > 0) {
+        driver.switchTo().frame("PreviewFrame");
+      }
+      if (driver.findElements(MERCURY_SKIN).size() > 0) {
+        wait.forElementVisible(By.cssSelector(
+            LOGGED_IN_USER_SELECTOR_MERCURY.replace("%userName%", userName.replace(" ", "_"))));
+      } else {
+        WebElement avatar = wait.forElementPresent(By.cssSelector(LOGGED_IN_USER_SELECTOR_OASIS));
+        String loggedInUserName = avatar.getAttribute("alt");
+        if (!loggedInUserName.equals(userName) && !loggedInUserName.equals(userName + " avatar")) {
+          throw new IllegalArgumentException(
+              "Invalid user, expected " + userName + ", but found: " + loggedInUserName);
+        }
+      }
+    } finally {
+      restoreDefaultImplicitWait();
+      driver.switchTo().defaultContent();
+    }
+    Log.log("verifyUserLoggedIn", "user " + userName + " logged in", true);
+    return true;
   }
 
   public void verifyUserLoggedIn(User user) {
-    verifyUserLoggedIn(user.getUserName());
+    this.verifyUserLoggedIn(user.getUserName());
+  }
+
+  public boolean isUserLoggedOutMobile() {
+    return isVisible(mobileAnonAvatarPlaceholder);
   }
 
   public DeletePageObject deletePage() {
     String url =
         urlBuilder.appendQueryStringToURL(driver.getCurrentUrl(), URLsContent.ACTION_DELETE);
     getUrl(url);
-    PageObjectLogging.log("deletePage", "delete page opened", true);
+    Log.log("deletePage", "delete page opened", true);
     return new DeletePageObject(driver);
   }
 
-  public String getBannerNotificationText() {
-    return bannerNotification.getText();
+  public List<Notification> getNotifications(){
+    wait.forElementVisible(BANNER_NOTIFICATION);
+    List<Notification> notificationList = new ArrayList<>();
+    for (WebElement notificationElement : notificationElements){
+      Notification notification = new Notification(driver, notificationElement);
+      notificationList.add(notification);
+    }
+    return notificationList;
   }
 
-  public BlogPageObject openBlogByName(String wikiURL, String blogTitle, String userName) {
+  public List<Notification> getNotifications(NotificationType notificationType){
+    List<Notification> notificationList = getNotifications();
+    return notificationList.stream().filter(n -> n.getType().toLowerCase().contains(notificationType.getClassName()))
+            .collect(Collectors.toList());
+  }
+
+  public boolean isNotificationPresent(NotificationType type, String message) {
+    return getNotifications(type).stream().anyMatch(n -> n.getMessage().contains(message));
+  }
+
+  public BlogPage openBlogByName(String wikiURL, String blogTitle, String userName) {
     getUrl(wikiURL + URLsContent.BLOG_NAMESPACE.replace("%userName%", userName) + blogTitle);
-    return new BlogPageObject(driver);
+    return new BlogPage();
   }
 
   public ArticlePageObject openMainPage(String wikiURL) {
@@ -427,63 +462,36 @@ public class WikiBasePageObject extends BasePageObject {
     return new ArticlePageObject();
   }
 
-  public void verifyLoginRequiredMessage() {
-    wait.forTextInElement(wikiFirstHeader, PageContent.LOGIN_REQUIRED);
-    PageObjectLogging.log("LoginRequiredMessage", "Login required message in first header present",
-        true, driver);
-  }
-
-  public SpecialUserLoginPageObject clickLoginOnSpecialPage() {
+  public void clickLoginOnSpecialPage() {
     wait.forElementVisible(specialUserLoginLink);
-    PageObjectLogging.log("LoginLinkPresent", "Link to login special page present", true, driver);
+    Log.log("Element found", "Link to login special page present", true);
     scrollAndClick(specialUserLoginLink);
-    PageObjectLogging.log("LoginLinkClicked", "Link to login special page clicked", true, driver);
-
-    return new SpecialUserLoginPageObject(driver);
-  }
-
-  public void verifyNotLoggedInMessage() {
-    wait.forTextInElement(wikiFirstHeader, PageContent.NOT_LOGGED_IN_MESSAGE);
-    PageObjectLogging.log("NotLoggedInMessage", "Not logged in message present", true, driver);
-  }
-
-  public String receiveMailWithNewPassword(String email, String password) {
-    String newPassword = MailFunctions.getPasswordFromEmailContent(
-        MailFunctions.getFirstEmailContent(email, password, "Reset your Wikia password"));
-    PageObjectLogging.log("NewPasswordRecived", "New password recived from mail: " + newPassword,
-        true);
-
-    return newPassword;
   }
 
   public void verifyRevisionMarkedAsMinor() {
     if (isElementOnPage(cssMinorEdit)) {
-      PageObjectLogging.log("cssEditSummary", "minor edit is marked in first revision", true);
+      Log.log("cssEditSummary", "minor edit is marked in first revision", true);
     } else {
       throw new NoSuchElementException("Minor Edit is not present on the page");
     }
   }
 
   /**
-   * Logout by navigating to 'logout' button href attribute value;
+   * Logout by clicking on "Sign out" option in global navigation
    */
   public void logOut() {
     try {
-      if (navigationLogoutLink.getAttribute("href") != null) {
-        driver.get(navigationLogoutLink.getAttribute("href"));
-      } else {
-        throw new WebDriverException("No logout link provided");
-      }
+      getGlobalNavigation().clickAvatarAndSignOut();
     } catch (TimeoutException e) {
-      PageObjectLogging.log("logOut", "page loads for more than 30 seconds", true);
+      Log.log("logOut", "page loads for more than 30 seconds", true);
     }
   }
 
-  public String loginAs(String userName, String password, String wikiURL) {
-    String token = Helios.getAccessToken(userName, password);
+  public String loginAs(String userName, String wikiURL) {
+    String token = Helios.getAccessToken(userName);
 
     driver.manage().addCookie(new Cookie("access_token", token,
-        String.format(".%s", Configuration.getEnvType().getWikiaDomain()), null, null));
+        String.format(".%s", Configuration.getEnvType().getDomain(driver.getCurrentUrl())), null, null));
 
     if (driver.getCurrentUrl().contains("Logout")) {
       driver.get(wikiURL);
@@ -491,89 +499,82 @@ public class WikiBasePageObject extends BasePageObject {
       refreshPageAddingCacheBuster();
     }
 
-    verifyUserLoggedIn(userName);
-    PageObjectLogging.log("loginCookie",
-        "user was logged in by by helios using access token: " + token, true);
+    this.verifyUserLoggedIn(userName);
+    Log.info("loginCookie",
+        "user was logged in by by helios using access token: " + token);
     logMercuryUserId();
 
     return token;
   }
 
   public String loginAs(User user) {
-    return loginAs(user.getUserName(), user.getPassword(), urlBuilder.getUrlForWiki());
+    return loginAs(user.getUserName(), urlBuilder.getUrl());
   }
 
   private void logMercuryUserId() {
     Object scriptOut = driver.executeScript("return window.M && window.M.prop('userId')");
 
     if (scriptOut != null) {
-      PageObjectLogging.logInfo("Mercury userID: " + scriptOut.toString());
+      Log.info("Mercury userID: " + scriptOut.toString());
     }
   }
 
   public void openWikiPage(String wikiURL) {
     getUrl(wikiURL);
-    PageObjectLogging.log("openWikiPage", "Wiki page is opened", true);
+    Log.log("openWikiPage", "Wiki page is opened", true);
   }
 
   public void verifyPageUnfollowed() {
     wait.forTextInElement(followButton, "Follow");
-    PageObjectLogging.log("verifyPageUnfollowed", "page is not followed", true);
+    Log.log("verifyPageUnfollowed", "page is not followed", true);
   }
 
   public void follow() {
     wait.forElementVisible(followButton);
     jsActions.click(followButton);
     wait.forTextInElement(followButton, "Following");
-    PageObjectLogging.log("followArticle", "page is followed", true, driver);
+    Log.log("followArticle", "page is followed", true, driver);
   }
 
   public WatchPageObject unfollowCurrentUrl() {
     driver.get(
         urlBuilder.appendQueryStringToURL(driver.getCurrentUrl(), URLsContent.ACTION_UNFOLLOW));
-    return new WatchPageObject(driver);
+    return new WatchPageObject();
   }
 
   public RenamePageObject renameUsingDropdown() {
-    articleEditDropdown.click();
+    this.openArticleEditDropdown();
     wait.forElementVisible(renameDropdown);
-    renameDropdown.click();
+    scrollAndClick(renameDropdown);
     return new RenamePageObject(driver);
   }
 
   public DeletePageObject deleteUsingDropdown() {
-    articleEditDropdown.click();
-    wait.forElementVisible(deleteDropdown);
+    this.openArticleEditDropdown();
+    wait.forElementClickable(deleteDropdown);
     scrollAndClick(deleteDropdown);
     return new DeletePageObject(driver);
   }
 
+  protected void openArticleEditDropdown() {
+    new Actions(driver).moveToElement(articleEditDropdown).perform();
+  }
+
   public String getHeaderText() {
-    wait.forElementVisible(wikiFirstHeader);
-    return wikiFirstHeader.getText();
+    wait.forElementVisible(articleTitle);
+    return articleTitle.getText();
   }
 
   public void verifyHeader(String fileName) {
-    wait.forElementVisible(wikiFirstHeader);
-    Assertion.assertStringContains(wikiFirstHeader.getText(), fileName);
-  }
-
-  public void disableCaptcha() {
-    String url =
-        urlBuilder.appendQueryStringToURL(driver.getCurrentUrl(), URLsContent.DISABLE_CAPTCHA);
-    getUrl(url);
-  }
-
-  public HubBasePageObject openHubByUrl(String hubUrl) {
-    getUrl(hubUrl);
-    return new HubBasePageObject(driver);
+    wait.forElementVisible(articleTitle);
+    Assertion.assertEquals(articleTitle.getText().replace(" ", "_"), fileName);
   }
 
   public String getNameForArticle() {
     return PageContent.ARTICLE_NAME_PREFIX + getTimeStamp();
   }
 
-  public String getPseudoElementValue(WebElement element, String pseudoElement, String cssValue) {
+  protected String getPseudoElementValue(WebElement element, String pseudoElement, String cssValue) {
     return driver
         .executeScript("return getComputedStyle(arguments[0], arguments[1])[arguments[2]];",
             element, pseudoElement, cssValue)
@@ -582,14 +583,14 @@ public class WikiBasePageObject extends BasePageObject {
 
   public VisualEditorPageObject openNewArticleEditModeVisual(String wikiURL) {
     getUrl(urlBuilder.appendQueryStringToURL(wikiURL + URLsContent.WIKI_DIR + getNameForArticle(),
-        URLsContent.VEACTION_EDIT));
-    return new VisualEditorPageObject(driver);
+                                             URLsContent.VEACTION_EDIT));
+    return new VisualEditorPageObject();
   }
 
   public void addVideoViaAjax(String videoURL) {
-    String request = new String(
-        "$.ajax('" + getWikiUrl() + "wikia.php?controller=Videos&method=addVideo&format=json', {"
-            + "data: {url: '" + videoURL + "'}," + "type: 'POST' } );");
+    String request =
+      "$.ajax('" + getWikiUrl() + "wikia.php?controller=Videos&method=addVideo&format=json', {"
+        + "data: {url: '" + videoURL + "'}," + "type: 'POST' } );";
     jsActions.execute(request);
   }
 
@@ -597,7 +598,7 @@ public class WikiBasePageObject extends BasePageObject {
     waitForElementNotVisibleByElement(veMode);
     waitForElementNotVisibleByElement(focusMode);
     waitForElementNotVisibleByElement(veToolMenu);
-    PageObjectLogging.log("verifyVEPublishComplete", "Publish is done", true, driver);
+    Log.log("verifyVEPublishComplete", "Publish is done", true, driver);
   }
 
   public WikiHistoryPageObject openArticleHistoryPage() {
@@ -605,110 +606,85 @@ public class WikiBasePageObject extends BasePageObject {
     return new WikiHistoryPageObject();
   }
 
-  private String getArticleName() {
+  public String getArticleName() {
     return (String) jsActions.execute(WikiaGlobalVariables.WG_PAGE_NAME);
   }
 
   public void verifyArticleNameInWgPageName(String targetText) {
     Assertion.assertStringContains(targetText, getArticleName());
-    PageObjectLogging.log("verifyArticleNameInWgPageName",
-        "The wgPageName variable contains article name" + targetText, true);
+    Log.log("verifyArticleNameInWgPageName",
+                          "The wgPageName variable contains article name" + targetText, true);
   }
 
-  public void verifyNumberOfTop1kWikis(Integer numberOfWikis) {
-    String pattern = "List of wikis with matched criteria (" + numberOfWikis + ")";
+  public void verifyNumberOfTop1kWikisInRange(Range expectedRange) {
     wait.forElementVisible(headerWhereIsMyExtensionPage);
-    PageObjectLogging.log("verifyNumberOfTop1kWikis", "Verification of top 1k wikis", true, driver);
-    Assertion.assertStringContains(headerWhereIsMyExtensionPage.getText(), pattern);
+    Log.log("verifyNumberOfTop1kWikisInRange", "Verification of top 1k wikis", true, driver);
+    Pattern p = Pattern.compile("\\d+");
+    Matcher m = p.matcher(headerWhereIsMyExtensionPage.getText());
+    m.find();
+    Assertion.assertTrue(
+            expectedRange.contains(Integer.parseInt(m.group())),
+            String.format("Number of Top 1k Wikis between %s and %s", expectedRange.getMinimum(), expectedRange.getMaximum())
+    );
   }
 
   protected Boolean isNewGlobalNavPresent() {
     return isElementOnPage(newGlobalNavigation);
   }
 
-  public void setCookie(String name, String value) {
-    Cookie newCookie = new Cookie(name, value);
-    driver.manage().addCookie(newCookie);
-    PageObjectLogging.log("setCookie", "Set cookie: '" + name + "' to " + value, true);
-  }
-
-  public void deleteCookie(String name) {
-    driver.manage().deleteCookieNamed(name);
-    PageObjectLogging.log("deleteCookie", "Remove '" + name + "' from cookie", true);
-  }
-
-  public void setCookieGeo(String countryCode) {
-    String cookieName = "Geo";
-    try {
-      JSONObject geo = new JSONObject();
-      geo.put("country", countryCode);
-      setCookie(cookieName, geo.toString());
-    } catch (JSONException ex) {
-      PageObjectLogging.log("setCookieGeo", "Cannot set cookie ('" + cookieName + "')", true);
-    }
-  }
-
-  public Dimension getWindowSize() {
+  protected Dimension getWindowSize() {
     return driver.manage().window().getSize();
-  }
-
-  public void resizeWindow(int width, int height) {
-    try {
-      driver.manage().window().setSize(new Dimension(width, height));
-      PageObjectLogging.log("ResizeWindow",
-          "Resize window (width=" + width + ", height=" + height + ")", true);
-    } catch (WebDriverException ex) {
-      PageObjectLogging.log("ResizeWindow",
-          "Cannot resize window (width=" + width + ", height=" + height + ")", true);
-    }
   }
 
   public void scrollToFooter() {
     wait.forElementVisible(footer);
-    jsActions.scrollToElement(footer);
-    PageObjectLogging.log("scrollToFooter", "Scroll to the footer of the page", true);
+    jsActions.scrollIntoView(footer);
+
+    Log.log("scrollToFooter", "Scroll to the footer of the page", true);
+  }
+
+  public void scrollToRecirculationPrefooter() {
+    wait.forElementPresent(RECIRCULATION_PREFOOTER);
+    jsActions.scrollIntoView(RECIRCULATION_PREFOOTER);
+    wait.forElementPresent(RECIRCULATION_PREFOOTER_FULFILLED);
+
+    Log.log("scrollToRecirculationPrefooter", "Scroll to the recirculation prefooter", true);
   }
 
   public void verifyGlobalNavigation() {
     wait.forElementVisible(globalNavigationBar);
-    PageObjectLogging.log("verifyGlobalNavigation", "Verified global navigation", true);
+    Log.log("verifyGlobalNavigation", "Verified global navigation", true);
   }
 
+  public boolean isFacebookButtonVisible() {
+    return isElementOnPage(facebookConnectButton);
+  }
 
-  public void verifyFBButtonVisible() {
-    Assertion.assertTrue(isElementOnPage(formConnectWithFbButtonBasic));
+  public boolean isGoogleButtonVisible() {
+    return isElementOnPage(googleConnectButton);
   }
 
   public void verifyAvatarVisible() {
     wait.forElementVisible(globalNavigationAvatar);
-    PageObjectLogging.log("verifyAvatarVisible", "desired avatar is visible on navbar", true);
-  }
-
-  public UserProfilePageObject clickOnAvatar() {
-    getGlobalNavigation().openAccountNavigation();
-    globalNavigationAvatar.click();
-    PageObjectLogging.log("clickOnAvatar", "clicked on avatar", true);
-    return new UserProfilePageObject(driver);
-  }
-
-  public void redirectToAnotherRandomArticle() {
-    String wikiURL = getCurrentUrl().substring(0, getCurrentUrl().indexOf("wiki/"));
-    getUrl(wikiURL + URLsContent.WIKI_DIR + "Special:Random/article");
+    Log.log("verifyAvatarVisible", "desired avatar is visible on navbar", true);
   }
 
   /**
    * Refresh Wiki page, busting the cache( by adding cb=currentTimestamp )
    */
   public void refreshPageAddingCacheBuster() {
-    driver.get(urlBuilder.appendQueryStringToURL(driver.getCurrentUrl(),
-        "cb=" + DateTime.now().getMillis()));
+    driver.get(getUrlWithCacheBuster(driver.getCurrentUrl()));
+  }
+
+  public String getUrlWithCacheBuster(String url) {
+    return urlBuilder.appendQueryStringToURL(url, "cb=" + DateTime.now().getMillis());
+  }
+
+  public String getWikiID() {
+    return (String) driver.executeScript("return wgCityId");
   }
 
   public enum PositionsVideo {
     LEFT, CENTER, RIGHT
-  }
-
-  public enum HubName {
-    VIDEO_GAMES, ENTERTAINMENT, LIFESTYLE
   }
 }

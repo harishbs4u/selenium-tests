@@ -1,13 +1,12 @@
 package com.wikia.webdriver.elements.fandom.components;
 
-
-import java.util.List;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.BasePageObject;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
-import com.wikia.webdriver.pageobjectsfactory.pageobject.BasePageObject;
+import java.util.List;
 
 public class WPNotifications extends BasePageObject {
 
@@ -16,7 +15,7 @@ public class WPNotifications extends BasePageObject {
 
   public boolean isNotificationVisible(String notificationText) {
     for (WebElement element : notifications) {
-      if (element.findElement(By.cssSelector("p")).getText().equals(notificationText)) {
+      if (element.findElement(By.cssSelector("p")).getText().contains(notificationText)) {
         return true;
       }
     }

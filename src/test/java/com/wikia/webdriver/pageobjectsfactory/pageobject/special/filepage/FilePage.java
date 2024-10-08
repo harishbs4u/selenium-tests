@@ -1,17 +1,18 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.special.filepage;
 
-import java.util.List;
+import com.wikia.webdriver.common.contentpatterns.URLsContent;
+import com.wikia.webdriver.common.core.Assertion;
+import com.wikia.webdriver.common.logging.Log;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.actions.DeletePageObject;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.FindBys;
 
-import com.wikia.webdriver.common.contentpatterns.URLsContent;
-import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.actions.DeletePageObject;
+import java.util.List;
 
 public class FilePage extends WikiBasePageObject {
 
@@ -26,7 +27,7 @@ public class FilePage extends WikiBasePageObject {
   @FindBys(@FindBy(css = ".tabs li"))
   private List<WebElement> tabs;
   @FindBy(css = "div#mw-imagepage-nofile")
-  private WebElement noFileText;
+  private WebElement noFileTextBox;
   @FindBy(css = "li#mw-imagepage-reupload-link a")
   private WebElement reuploadLink;
   @FindBy(css = "#wpWikiaVideoAddUrl")
@@ -41,8 +42,7 @@ public class FilePage extends WikiBasePageObject {
   private WebElement tabBody;
 
   public FilePage open(String fileName, boolean noRedirect) {
-    String url =
-        urlBuilder.getUrlForWiki() + URLsContent.WIKI_DIR + URLsContent.FILE_NAMESPACE + fileName;
+    String url = urlBuilder.getUrl() + URLsContent.WIKI_DIR + URLsContent.FILE_NAMESPACE + fileName;
     if (noRedirect) {
       url = urlBuilder.appendQueryStringToURL(url, "redirect=no");
     }
@@ -59,7 +59,7 @@ public class FilePage extends WikiBasePageObject {
     WebElement currentTab = tabList.get(tab);
     wait.forElementVisible(currentTab);
     scrollAndClick(currentTab);
-    PageObjectLogging.log("clickTab", tab + " selected", true);
+    Log.log("clickTab", tab + " selected", true);
   }
 
   public void selectHistoryTab() {
@@ -69,7 +69,7 @@ public class FilePage extends WikiBasePageObject {
   public void verifySelectedTab(String tabName) {
     wait.forElementVisible(tabBody);
     Assertion.assertEquals(tabBody.getAttribute("data-tab-body"), tabName);
-    PageObjectLogging.log("verified selected tab", tabName + " selected", true);
+    Log.log("verified selected tab", tabName + " selected", true);
   }
 
   public void refreshAndVerifyTabs(int tab) {
@@ -92,14 +92,23 @@ public class FilePage extends WikiBasePageObject {
 
   public void verifyEmbeddedVideoIsPresent() {
     wait.forElementVisible(fileEmbedded);
-    PageObjectLogging.log("verifyEmbeddedVideoIsPresent", "Verified embedded video is visible",
-        true);
+    Log.log("verifyEmbeddedVideoIsPresent", "Verified embedded video is visible", true);
+  }
+
+  public boolean isNoFileTextBoxVisible() {
+    try {
+      wait.forElementVisible(noFileTextBox);
+      Log.log("isNoFileTextBoxVisible", "No-file textbox is visible ", true);
+      return true;
+    } catch (TimeoutException e) {
+      Log.log("isNoFileTextBoxVisible", e, false);
+      return false;
+    }
   }
 
   public void verifyEmptyFilePage() {
-    wait.forElementVisible(noFileText);
-    PageObjectLogging.log("verifyEmbeddedVideoIsPresent", "Verified embedded video is visible",
-        true);
+    Assertion.assertEquals(isNoFileTextBoxVisible(), true);
+    Log.log("verifyEmbeddedVideoIsPresent", "Verified embedded video is visible", true);
   }
 
   public String getImageUrl() {
@@ -118,7 +127,13 @@ public class FilePage extends WikiBasePageObject {
 
   public void verifyTabsExistImage() {
     String[] expectedTabs = {"about", "history"};
-    Assertion.assertTrue(expectedTabs.length <= tabs.size());
+    int numberOfTabs = tabs.size();
+    int expectedNumberOfTabs = expectedTabs.length;
+    Assertion.assertTrue(numberOfTabs >= expectedNumberOfTabs, String.format(
+        "Number of tabs (%s) is not greater or equal to %s,",
+        numberOfTabs,
+        expectedNumberOfTabs
+    ));
     verifyTabsExist(expectedTabs);
   }
 
@@ -134,17 +149,17 @@ public class FilePage extends WikiBasePageObject {
     scrollAndClick(reuploadLink);
 
     uploadFileURL.sendKeys(url);
-    PageObjectLogging.log("replaceVideo", url + " typed into url field", true);
+    Log.log("replaceVideo", url + " typed into url field", true);
 
     wait.forElementVisible(addButton);
     scrollAndClick(addButton);
-    PageObjectLogging.log("replaceVideo", "add url button clicked", true, driver);
+    Log.log("replaceVideo", "add url button clicked", true, driver);
   }
 
   public DeletePageObject deleteVersion(int num) {
     scrollAndClick(historyDeleteLinks.get(num - 1));
 
-    PageObjectLogging.log("deletePage", "delete page opened", true);
+    Log.log("deletePage", "delete page opened", true);
 
     return new DeletePageObject(driver);
   }

@@ -1,17 +1,15 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.vet;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.wikipage.editmode.WikiArticleEditMode;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.FindBys;
 import org.openqa.selenium.support.PageFactory;
 
+import java.time.Duration;
 import java.util.List;
 
 public class VetAddVideoComponentObject extends WikiBasePageObject {
@@ -39,7 +37,10 @@ public class VetAddVideoComponentObject extends WikiBasePageObject {
   @FindBy(css = "#VET-add-from-preview")
   private WebElement addFromPreviewButton;
 
+  private By addFromPreviewButtonBy = By.cssSelector("#VET-add-from-preview");
   private By addVideoLibraryLink = By.cssSelector("figure + a");
+  private By addVideoModalBy = By.cssSelector("#VideoEmbedBackWrapper");
+  private By videoEmbedDetailsBy = By.cssSelector("#VideoEmbedDetails");
 
   private String videoName;
 
@@ -51,26 +52,25 @@ public class VetAddVideoComponentObject extends WikiBasePageObject {
   private void typeInUrl(String url) {
     wait.forElementVisible(urlField);
     urlField.sendKeys(url);
-    PageObjectLogging.log("typeInUrl", url + " typed into url field", true);
+    Log.log("typeInUrl", url + " typed into url field", true);
   }
 
   private void clickAddButtonProvider() {
     wait.forElementVisible(addUrlButton);
     scrollAndClick(addUrlButton);
-    PageObjectLogging.log("clickAddButton", "add url button clicked", true, driver);
+    Log.log("clickAddButton", "add url button clicked", true, driver);
   }
 
   private void typeInSearchQuery(String query) {
     wait.forElementVisible(findField);
     findField.sendKeys(query);
-    PageObjectLogging.log("typeInSearchQuery",
-                          query + " query typed into search video field", true);
+    Log.log("typeInSearchQuery", query + " query typed into search video field", true);
   }
 
   private void clickFindButton() {
     wait.forElementVisible(findButton);
     scrollAndClick(findButton);
-    PageObjectLogging.log("clickFindButton", "find button clicked", true, driver);
+    Log.log("clickFindButton", "find button clicked", true, driver);
   }
 
   private void clickAddVideoLibrary(int videoListItem) {
@@ -78,19 +78,29 @@ public class VetAddVideoComponentObject extends WikiBasePageObject {
     wait.forElementVisible(listElem);
     WebElement addVideoLink = listElem.findElement(addVideoLibraryLink);
     this.videoName = addVideoLink.getAttribute("title");
+    wait.forElementClickable(addFromPreviewButtonBy);
     scrollAndClick(addFromPreviewButton);
-    PageObjectLogging.log("clickAddVideoLibrary",
-                          "add video button clicked: " + this.videoName, true, driver);
+    wait.forElementNotVisible(addFromPreviewButton);
+    Log.log("clickAddVideoLibrary", "add video button clicked: " + this.videoName, true, driver);
   }
 
   private void checkIfLibraryIsPresent() {
     wait.forElementVisible(libraryLIs);
-    PageObjectLogging.log("checkIfLibraryIsPresent", "library carousel present", true);
+    Log.log("checkIfLibraryIsPresent", "library carousel present", true);
   }
 
   public VetOptionsComponentObject addVideoByUrl(String url) {
     typeInUrl(url);
     clickAddButtonProvider();
+    wait.forElementVisible(videoEmbedDetailsBy);
+
+    return new VetOptionsComponentObject(driver);
+  }
+
+  public VetOptionsComponentObject addVideoWithoutDetailsByUrl(String url) {
+    typeInUrl(url);
+    clickAddButtonProvider();
+    wait.forElementNotVisible(addVideoModalBy, Duration.ofSeconds(30));
 
     return new VetOptionsComponentObject(driver);
   }
@@ -108,13 +118,13 @@ public class VetAddVideoComponentObject extends WikiBasePageObject {
 
   private void clickVideoThumbnail(int i) {
     scrollAndClick(videoThumbnailsList.get(i));
-    PageObjectLogging.log("clickVideoThumbnail", "video thumbnails clicked", true);
+    Log.log("clickVideoThumbnail", "video thumbnails clicked", true);
   }
 
   private void checkVideoPreviewAppearing() {
     wait.forElementVisible(videoPlayer);
     waitForValueToBePresentInElementsCssByCss("#VET-preview", "display", "block");
-    PageObjectLogging.log("checkVideoPreviewAppearing", "video preview appeared", true);
+    Log.log("checkVideoPreviewAppearing", "video preview appeared", true);
   }
 
   public String getVideoName() {
@@ -126,8 +136,8 @@ public class VetAddVideoComponentObject extends WikiBasePageObject {
       wait.forElementVisible(suggestedVideo);
 
       return true;
-    } catch(TimeoutException e) {
-      PageObjectLogging.logInfo("Suggestion are not displayed", e);
+    } catch (TimeoutException e) {
+      Log.info("Suggestion are not displayed", e);
 
       return false;
     }
@@ -136,7 +146,7 @@ public class VetAddVideoComponentObject extends WikiBasePageObject {
   public WikiArticleEditMode clickCloseButton() {
     wait.forElementVisible(closeButton);
     scrollAndClick(closeButton);
-    PageObjectLogging.log("clickCloseButton", "close button clicked", true);
+    Log.log("clickCloseButton", "close button clicked", true);
 
     return new WikiArticleEditMode();
   }

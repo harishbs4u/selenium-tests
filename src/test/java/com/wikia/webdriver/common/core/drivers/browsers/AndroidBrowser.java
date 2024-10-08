@@ -1,16 +1,15 @@
 package com.wikia.webdriver.common.core.drivers.browsers;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import org.openqa.selenium.remote.DesiredCapabilities;
-
 import com.wikia.webdriver.common.core.WikiaWebDriver;
 import com.wikia.webdriver.common.core.configuration.Configuration;
 import com.wikia.webdriver.common.core.drivers.BrowserAbstract;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 
 import io.appium.java_client.android.AndroidDriver;
+import org.openqa.selenium.remote.DesiredCapabilities;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class AndroidBrowser extends BrowserAbstract {
 
@@ -28,10 +27,9 @@ public class AndroidBrowser extends BrowserAbstract {
     try {
       url = new URL("http://" + Configuration.getAppiumIp() + "/wd/hub");
     } catch (MalformedURLException e) {
-      PageObjectLogging.log("getAndroindInstance", e, false);
+      Log.log("getAndroindInstance", e, false);
     }
     mobileDriver = new AndroidDriver(url, destCaps);
-
   }
 
   @Override

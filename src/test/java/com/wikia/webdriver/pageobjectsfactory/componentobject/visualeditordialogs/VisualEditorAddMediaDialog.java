@@ -3,13 +3,10 @@ package com.wikia.webdriver.pageobjectsfactory.componentobject.visualeditordialo
 import com.wikia.webdriver.common.contentpatterns.PageContent;
 import com.wikia.webdriver.common.core.CommonUtils;
 import com.wikia.webdriver.common.core.interactions.Elements;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.visualeditor.VisualEditorPageObject;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.Select;
 
@@ -36,36 +33,12 @@ public class VisualEditorAddMediaDialog extends VisualEditorDialog {
 
   private By mediaResultsWidgetBy = By.cssSelector(".ve-ui-wikiaMediaResultsWidget");
   private By mediaResultsBy = By.cssSelector(".ve-ui-mwMediaResultWidget");
-  private By mediaAddIconBy = By.cssSelector(".oo-ui-icon-unchecked");
-  private By mediaTitlesBy = By
-      .cssSelector(".ve-ui-wikiaMediaResultsWidget .oo-ui-labelElement-label");
-
-  public enum ImageLicense {
-    NONESELECTED("None selected", ""), FAIRUSE("Fairuse", ""), SELF("Self",
-        "This file was uploaded by the photographer or author."), FROMWIKIMEDIA("From Wikimedia",
-        "This file was originally uploaded on Wikipedia or another Wikimedia project."), CCBYSA(
-        "CC-BY-SA",
-        "This file is licensed under the Creative Commons Attribution-Share Alike License"), OTHERFREE(
-        "Other free", "This file is licensed under a free license."), PD("PD",
-        "This file is in the public domain"), PERMISSION("Permission",
-        "This file is copyrighted. The copyright holder has given permission for its use.");
-
-    private String displayName;
-    private String displayText;
-
-    ImageLicense(String displayName, String displayText) {
-      this.displayName = displayName;
-      this.displayText = displayText;
-    }
-
-    public String toString() {
-      return displayName;
-    }
-
-    public String getText() {
-      return displayText;
-    }
-  }
+  private By mediaAddIconBy = By.cssSelector(
+      ".ve-ui-WikiaMediaOptionWidget-thumbnail:not(.ve-ui-texture-transparency)");
+  private By mediaTitlesBy = By.cssSelector(
+      ".ve-ui-wikiaMediaResultsWidget .oo-ui-labelElement-label");
+  private By previewVideoButtonBy = By.cssSelector(".oo-ui-icon-preview-video");
+  private By previewPhotoButtonBy = By.cssSelector(".oo-ui-icon-preview-photo");
 
   public VisualEditorAddMediaDialog(WebDriver driver) {
     super(driver);
@@ -87,7 +60,7 @@ public class VisualEditorAddMediaDialog extends VisualEditorDialog {
     wait.forElementVisible(mediaAdded);
     clickAddMediaButton();
     waitForDialogNotVisible();
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   public VisualEditorAddMediaDialog searchMedia(String searchText) {
@@ -108,7 +81,7 @@ public class VisualEditorAddMediaDialog extends VisualEditorDialog {
     }
     clickAddMediaButton();
     waitForDialogNotVisible();
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   public VisualEditorPageObject uploadImage(String fileName) {
@@ -117,7 +90,7 @@ public class VisualEditorAddMediaDialog extends VisualEditorDialog {
     wait.forElementVisible(topUploadButton);
     clickAddMediaButton();
     waitForDialogNotVisible();
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   public VisualEditorPageObject uploadImage(String fileName, String newFileName) {
@@ -127,19 +100,19 @@ public class VisualEditorAddMediaDialog extends VisualEditorDialog {
     typeNewFileName(newFileName);
     clickAddMediaButton();
     waitForDialogNotVisible();
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   public void selectImageLicense(ImageLicense imageLicense) {
     wait.forElementVisible(imageLicenseDropdown);
     Select imageLicenseSelect = new Select(imageLicenseDropdown);
     imageLicenseSelect.selectByValue(imageLicense.toString());
-    PageObjectLogging.log("selectImageLicense",
-        "License: " + imageLicense.toString() + " selected", true);
+    Log.log("selectImageLicense", "License: " + imageLicense.toString() + " selected", true);
   }
 
-  public VisualEditorPageObject uploadImage(String fileName, String newFileName,
-      ImageLicense imageLicense) {
+  public VisualEditorPageObject uploadImage(
+      String fileName, String newFileName, ImageLicense imageLicense
+  ) {
     waitForDialogVisible();
     selectFileToUpload(fileName);
     wait.forElementVisible(topUploadButton);
@@ -147,7 +120,7 @@ public class VisualEditorAddMediaDialog extends VisualEditorDialog {
     selectImageLicense(imageLicense);
     clickAddMediaButton();
     waitForDialogNotVisible();
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   private void typeNewFileName(String newFileName) {
@@ -168,28 +141,72 @@ public class VisualEditorAddMediaDialog extends VisualEditorDialog {
     WebElement targetMedia = mediaResultsWidget.findElements(mediaTitlesBy).get(index);
     targetMedia.click();
     waitForDialogNotVisible();
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   private void selectFileToUpload(String fileName) {
-    fileUploadInput
-        .sendKeys(CommonUtils.getAbsolutePathForFile(
-            PageContent.IMAGE_UPLOAD_RESOURCES_PATH + fileName));
-    PageObjectLogging.log("selectFileToUpload", "file " + fileName + " added to upload", true);
+    fileUploadInput.sendKeys(CommonUtils.getAbsolutePathForFile(
+        PageContent.IMAGE_UPLOAD_RESOURCES_PATH + fileName));
+    Log.log("selectFileToUpload", "file " + fileName + " added to upload", true);
   }
 
-  public VisualEditorPageObject previewExistingMediaByTitle(String title) {
+  public VisualEditorPageObject previewExistingVideoByTitle(String title) {
     waitForDialogVisible();
     WebElement media = findMediaByTitle(title);
-    media.click();
-    PageObjectLogging.log("previewExistingMediaByTitle", "Media clicked", true);
-    return new VisualEditorPageObject(driver);
+    media.findElement(previewVideoButtonBy).click();
+    Log.log("previewExistingMediaByTitle", "Media clicked", true);
+    return new VisualEditorPageObject();
+  }
+
+  public VisualEditorPageObject previewExistingPhotoByTitle(String title) {
+    waitForDialogVisible();
+    WebElement media = findMediaByTitle(title);
+    media.findElement(previewPhotoButtonBy).click();
+    Log.log("previewExistingMediaByTitle", "Media clicked", true);
+    return new VisualEditorPageObject();
   }
 
   private WebElement findMediaByTitle(String title) {
     WebElement mediaResultsWidget = mediaDialogBody.findElement(mediaResultsWidgetBy);
     wait.forElementVisible(mediaResultsWidget);
-    return Elements.getElementByValue(mediaResultsWidget.findElements(mediaTitlesBy), "title",
-        title);
+    return Elements.getElementByValue(mediaResultsWidget.findElements(mediaTitlesBy),
+                                      "title",
+                                      title
+    )
+        .findElement(parentBy)
+        .findElement(parentBy);
+  }
+
+  public enum ImageLicense {
+    NONESELECTED("None selected", ""), FAIRUSE("Fairuse", ""), SELF("Self",
+                                                                    "This file was uploaded by the photographer or author."
+    ), FROMWIKIMEDIA(
+        "From Wikimedia",
+        "This file was originally uploaded on Wikipedia or another Wikimedia project."
+    ), CCBYSA(
+        "CC-BY-SA",
+        "This file is licensed under the Creative Commons Attribution-Share Alike License"
+    ), OTHERFREE("Other free", "This file is licensed under a free license."), PD("PD",
+                                                                                  "This file is in the public domain"
+    ), PERMISSION(
+        "Permission",
+        "This file is copyrighted. The copyright holder has given permission for its use."
+    );
+
+    private String displayName;
+    private String displayText;
+
+    ImageLicense(String displayName, String displayText) {
+      this.displayName = displayName;
+      this.displayText = displayText;
+    }
+
+    public String toString() {
+      return displayName;
+    }
+
+    public String getText() {
+      return displayText;
+    }
   }
 }

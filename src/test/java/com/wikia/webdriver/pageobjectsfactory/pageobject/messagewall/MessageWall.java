@@ -2,40 +2,71 @@ package com.wikia.webdriver.pageobjectsfactory.pageobject.messagewall;
 
 import com.wikia.webdriver.common.contentpatterns.URLsContent;
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.core.configuration.Configuration;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.core.interactions.Typing;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.minieditor.MiniEditorComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.minieditor.MiniEditorPreviewComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.photo.PhotoAddComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
 
+import javax.swing.text.html.HTML;
+
 public class MessageWall extends WikiBasePageObject {
 
-  @FindBy(css = ".cke_button_ModeSource > .cke_icon")
+  static final By firstMessageWrapperBy = By.cssSelector(
+      ".comments li.SpeechBubble.message.message-main:nth-child(1)");
+  static final By replyButtonBy = By.cssSelector(".replyButton");
+  private static final String
+      NEW_MESSAGE_MENU
+      = ".comments li.SpeechBubble.message.message-main:nth-child(1) .buttons";
+  private static final String FIRST_MESSAGE_MENU = ".comments li:nth-child(1) .buttons ";
+  private static final String CLOSE_BUTTON_STRING = ".close-thread";
+  private static final By messageTitleBy = By.cssSelector(".msg-title");
+  private static final By messageBodyBy = By.cssSelector(".msg-body");
+  private static final By imageBy = By.cssSelector(".thumbimage");
+  private static final By messageTextBoldBy = By.cssSelector("b");
+  private static final By messageTextItalicBy = By.cssSelector("i");
+  private static final By messageTextBy = By.cssSelector(".msg-body *");
+  private static final By messageLinkBy = By.cssSelector("a");
+  private static final By messageUserNameBy = By.cssSelector(".edited-by > a:nth-child(1)");
+  private static final By moreButtonBy = By.cssSelector(".wikia-menu-button.secondary.combined");
+  private static final By editButtonBy = By.cssSelector(".edit-message");
+  private static final By removeButtonBy = By.cssSelector(".remove-message");
+  private static final By reopenButtonBy = By.cssSelector(".reopen-thread");
+  private static final By quoteButtonBy = By.cssSelector(".quote-button.secondary");
+  private static final By quoteMessageBy = By.cssSelector(".replies p");
+  private static final By saveChangesButtonBy = By.cssSelector(".save-edit");
+  private static final By closeThreadInfobox = By.cssSelector(".deleteorremove-bubble > .message");
+  private static final By replyBodyBy = By.cssSelector(".replyBody");
+  private static final By closeButtonBy = By.cssSelector(FIRST_MESSAGE_MENU + CLOSE_BUTTON_STRING);
+  @FindBy(css = ".cke_button__modesource")
   private WebElement sourceModeButton;
-  @FindBy(css = ".cke_toolbar_formatmini .cke_button_bold > .cke_icon")
+  @FindBy(css = "span.cke_toolbar_formatmini a.cke_button_bold")
   private WebElement boldButton;
-  @FindBy(css = ".cke_toolbar_formatmini .cke_button_italic > .cke_icon")
+  @FindBy(css = "span.cke_toolbar_formatmini a.cke_button_italic")
   private WebElement italicButton;
   @FindBy(css = ".cke_toolbar_insert .RTEImageButton > .cke_icon")
   private WebElement imageButton;
-  @FindBy(css = ".cke_toolbar_formatmini .cke_button_link > .cke_icon")
+  @FindBy(css = ".cke_button__link")
   private WebElement linkButton;
-  @FindBy(css = "#cke_contents_WallMessageBody > textarea")
+  @FindBy(css = "#cke_WallMessageBody textarea")
   private WebElement sourceModeInputField;
-  @FindBy(css = "#WallMessageBody")
+  @FindBy(css = "#wall-new-message")
+  private WebElement newWallMessageContainer;
+  @FindBy(css = "#cke_WallMessageBody")
   private WebElement messageMainBody;
+  @FindBy(css = "#WallMessageBody")
+  private WebElement messageMainBodySourceMode;
   @FindBy(css = "#WallMessageTitle")
   private WebElement messageTitleField;
-  @FindBy(css = "#WallMessageSubmit")
+  @FindBy(id = "WallMessageSubmit")
   private WebElement postButton;
   @FindBy(css = "#WallMessagePreview")
   private WebElement previewButton;
@@ -43,53 +74,49 @@ public class MessageWall extends WikiBasePageObject {
   private WebElement replyAreaAvatars;
   @FindBy(css = "[data-is-reply]:nth-child(1)")
   private WebElement editMessageWrapper;
+  @FindBy(css = "[data-is-reply]:nth-child(2)")
+  private WebElement editMessageWrapper2;
   @FindBy(css = ".speech-bubble-message-removed")
   private WebElement removedThreadMessage;
-  @FindBy(css = ".msg-title > a")
+  @FindBy(css = ".Board .msg-title > a")
   private List<WebElement> threadList;
-
-  private String newMessageMenu =
-      ".comments li.SpeechBubble.message.message-main:nth-child(1) .buttons";
-  private String firstMessageMenu = ".comments li:nth-child(1) .buttons ";
-  private String closeButtonString = ".close-thread";
-
-  By messageTitleBy = By.cssSelector(".msg-title");
-  By messageBodyBy = By.cssSelector(".msg-body");
-  By imageBy = By.cssSelector(".thumbimage");
-  By messageTextBoldBy = By.cssSelector("b");
-  By messageTextItalicBy = By.cssSelector("i");
-  By messageLinkBy = By.cssSelector("a");
-  By messageUserNameBy = By.cssSelector(".edited-by > a:nth-child(1)");
-  By moreButtonBy = By.cssSelector(".wikia-menu-button.secondary.combined");
-  By editButtonBy = By.cssSelector(".edit-message");
-  By removeButtonBy = By.cssSelector(".remove-message");
-  By closeButtonBy = By.cssSelector(firstMessageMenu + closeButtonString);
-  By reopenButtonBy = By.cssSelector(".reopen-thread");
-  By quoteButtonBy = By.cssSelector(".quote-button.secondary");
-  By quoteMessageBy = By.cssSelector(".replies p");
-  By saveChangesButtonBy = By.cssSelector(".save-edit");
-  By closeThreadInfobox = By.cssSelector(".deleteorremove-bubble > .message");
-  By firstMessageWrapperBy = By
-      .cssSelector(".comments li.SpeechBubble.message.message-main:nth-child(1)");
-  By replyButtonBy = By.cssSelector(".replyButton");
-  By replyBodyBy = By.cssSelector(".replyBody");
-
-  public MessageWall(WebDriver driver) {
-    super();
-  }
+  @FindBy(css = ".edited-by")
+  private WebElement wallEdition;
 
   public MessageWall open(String userName) {
-    getUrl(urlBuilder.getUrlForWiki(Configuration.getWikiName()) + URLsContent.USER_MESSAGE_WALL
-        + userName);
+    getUrl(urlBuilder.getUrlForWikiPage(URLsContent.USER_MESSAGE_WALL + userName));
     waitForPageLoad();
-    return new MessageWall(driver);
+
+    try {
+      Thread.sleep(10000);
+    } catch (Exception e) {
+
+    }
+
+    driver.navigate().refresh();
+
+    return new MessageWall();
   }
 
   public MiniEditorComponentObject triggerMessageArea() {
-    while (!postButton.isDisplayed()) {
-      jsActions.focus(messageMainBody);
+    return triggerMessageArea(false);
+  }
+
+  public MiniEditorComponentObject triggerMessageArea(Boolean sourceMode) {
+    WebElement messageBody = messageMainBody;
+    //Override messageBody if triggering in source mode
+    if (sourceMode) {
+      messageBody = messageMainBodySourceMode;
     }
-    PageObjectLogging.log("triggerMessageArea", "message area triggered", true);
+    wait.forElementClickable(messageBody).click();
+    new Actions(driver).moveToElement(newWallMessageContainer).perform();
+
+    while (!postButton.isDisplayed()) {
+      jsActions.focus(messageBody);
+    }
+    wait.forAttributeToContain(newWallMessageContainer, HTML.Attribute.CLASS.toString(), "focused");
+    Log.log("triggerMessageArea", "message area triggered", true);
+
     return new MiniEditorComponentObject(driver);
   }
 
@@ -97,265 +124,313 @@ public class MessageWall extends WikiBasePageObject {
     while (!driver.findElement(firstMessageWrapperBy).findElement(replyButtonBy).isDisplayed()) {
       jsActions.focus(driver.findElement(firstMessageWrapperBy).findElement(replyBodyBy));
     }
-    PageObjectLogging.log("triggerReplyMessageArea", "reply message area triggered", true);
+    Log.log("triggerReplyMessageArea", "reply message area triggered", true);
     return new MiniEditorComponentObject(driver);
   }
 
   public void triggerEditMessageArea() {
-    setDisplayStyle(firstMessageMenu, "block");
+    setDisplayStyle(FIRST_MESSAGE_MENU, "block");
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(moreButtonBy));
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(editButtonBy));
-    setDisplayStyle(firstMessageMenu, "none");
-    PageObjectLogging.log("triggerEditMessageArea", "edit message area triggered", true);
+    setDisplayStyle(FIRST_MESSAGE_MENU, "none");
+    Log.log("triggerEditMessageArea", "edit message area triggered", true);
   }
 
   public void submit() {
     driver.switchTo().defaultContent();
     scrollAndClick(postButton);
-    new Actions(driver).moveByOffset(0, 0).perform();
+    builder.moveByOffset(0, 0).perform();
+
     wait.forElementNotVisible(postButton);
-    PageObjectLogging.log("submit", "message submitted", true);
+    Log.log("submit", "message submitted", true);
   }
 
   public void submitEdition() {
     driver.switchTo().defaultContent();
-    WebElement saveButton =
-        driver.findElement(firstMessageWrapperBy).findElement(saveChangesButtonBy);
+    WebElement saveButton = driver.findElement(firstMessageWrapperBy)
+        .findElement(saveChangesButtonBy);
     jsActions.click(saveButton);
     waitForElementNotVisibleByElement(saveButton);
-    PageObjectLogging.log("submitEdition", "message edition submitted", true);
+    Log.log("submitEdition", "message wallEdition submitted", true);
   }
 
   public void submitQuote() {
     driver.switchTo().defaultContent();
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(replyButtonBy));
     wait.forElementNotPresent(By.cssSelector(".new-reply.loading"));
-    PageObjectLogging.log("submitQuote", "message quote submitted", true);
+    Log.log("submitQuote", "message quote submitted", true);
   }
 
   public MiniEditorPreviewComponentObject preview() {
     driver.switchTo().defaultContent();
     scrollAndClick(previewButton);
-    PageObjectLogging.log("preview", "MiniEditor preview opened", true);
+    Log.log("preview", "MiniEditor preview opened", true);
     return new MiniEditorPreviewComponentObject(driver);
   }
 
-  public void writeTitle(String title) {
+  public void setTitle(String title) {
     driver.switchTo().defaultContent();
     messageTitleField.clear();
-    messageTitleField.sendKeys(title);
-    PageObjectLogging.log("writeTitle", "title written", true);
-  }
-
-  public void writeEditTitle(String title) {
-    driver.switchTo().defaultContent();
-    WebElement titleField = editMessageWrapper.findElement(messageTitleBy);
-    titleField.clear();
-    titleField.sendKeys(title);
-    PageObjectLogging.log("writeEditTitle", "title edited", true);
+    Typing.sendKeysHumanSpeed(messageTitleField, title);
+    wait.forAttributeToContain(messageTitleField, "value", title);
+    Log.log("writeTitle", "title written", messageTitleField.getAttribute("value").equals(title));
   }
 
   public void writeSourceMode(String text) {
     sourceModeInputField.sendKeys(text);
-    PageObjectLogging.log("writeSourceMode", "message " + text + " written in source mode", true);
+    Log.log("writeSourceMode", "message " + text + " written in source mode", true);
   }
 
   public MessageWallCloseRemoveThreadPageObject clickRemoveThread() {
     refreshPage();
-    setDisplayStyle(newMessageMenu, "block");
+    setDisplayStyle(NEW_MESSAGE_MENU, "block");
     wait.forElementVisible(firstMessageWrapperBy);
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(moreButtonBy));
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(removeButtonBy));
-    setDisplayStyle(newMessageMenu, "none");
-    PageObjectLogging.log("clickRemoveThread", "remove thread button clicked", true);
+    setDisplayStyle(NEW_MESSAGE_MENU, "none");
+    Log.log("clickRemoveThread", "remove thread button clicked", true);
     return new MessageWallCloseRemoveThreadPageObject(driver);
   }
 
   public MessageWallCloseRemoveThreadPageObject clickCloseThread() {
-    refreshPage();
-    setDisplayStyle(newMessageMenu, "block");
+    setDisplayStyle(NEW_MESSAGE_MENU, "block");
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(moreButtonBy));
     WebElement closeButton = driver.findElement(closeButtonBy);
     wait.forElementClickable(closeButton);
-    scrollAndClick(closeButton);
-    setDisplayStyle(newMessageMenu, "none");
-    PageObjectLogging.log("clickCloseThread", "close thread button clicked", true);
+    jsActions.scrollElementIntoViewPort(closeButton);
+    closeButton.click();
+    setDisplayStyle(NEW_MESSAGE_MENU, "none");
+    Log.log("clickCloseThread", "close thread button clicked", true);
     return new MessageWallCloseRemoveThreadPageObject(driver);
   }
 
   public MiniEditorComponentObject clickQuoteButton() {
-    setDisplayStyle(firstMessageMenu, "block");
+    setDisplayStyle(FIRST_MESSAGE_MENU, "block");
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(quoteButtonBy));
-    setDisplayStyle(firstMessageMenu, "none");
-    PageObjectLogging.log("clickQuoteButton", "quote button clicked", true);
+    setDisplayStyle(FIRST_MESSAGE_MENU, "none");
+    Log.log("clickQuoteButton", "quote button clicked", true);
     return new MiniEditorComponentObject(driver);
   }
 
   public void clickReopenThread() {
-    setDisplayStyle(firstMessageMenu, "block");
+    setDisplayStyle(FIRST_MESSAGE_MENU, "block");
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(moreButtonBy));
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(reopenButtonBy));
-    setDisplayStyle(firstMessageMenu, "none");
-    PageObjectLogging.log("clickReopenThread", "reopen button clicked", true);
+    setDisplayStyle(FIRST_MESSAGE_MENU, "none");
+    Log.log("clickReopenThread", "reopen button clicked", true);
   }
 
   public void clickSourceModeButton() {
-    wait.forElementVisible(sourceModeButton);
+    wait.forElementClickable(sourceModeButton);
     scrollAndClick(sourceModeButton);
     wait.forElementVisible(By.cssSelector(".editor-open.mode-source"));
-    PageObjectLogging.log("clickSourceModeButton", "source mode button clicked", true);
+    Log.log("clickSourceModeButton", "source mode button clicked", true);
   }
 
   public void clickBoldButton() {
-    wait.forElementVisible(boldButton);
+    boolean state = boldButton.getAttribute(HTML.Attribute.CLASS.toString()).contains("cke_on");
+    wait.forElementClickable(boldButton);
     scrollAndClick(boldButton);
-    PageObjectLogging.log("clickBoldButton", "bold button clicked", true);
+    if (state) {
+      wait.forElementPresent(By.cssSelector(".cke_button__bold.cke__button_off"));
+      Log.log("clickBoldButton", "italic button is now OFF", true);
+    } else {
+      wait.forElementPresent(By.cssSelector(".cke_button__bold.cke_button_on"));
+      Log.log("clickBoldButton", "italic button is now ON", true);
+    }
   }
 
   public void clickItalicButton() {
-    wait.forElementVisible(italicButton);
+    boolean state = italicButton.getAttribute(HTML.Attribute.CLASS.toString()).contains("cke_on");
+    wait.forElementClickable(boldButton);
     scrollAndClick(italicButton);
-    PageObjectLogging.log("clickItalicButton", "italic button clicked", true);
+    if (state) {
+      wait.forElementPresent(By.cssSelector(".cke_button__italic.cke_button_off"));
+      Log.log("clickItalicButton", "italic button is now OFF", true);
+    } else {
+      wait.forElementPresent(By.cssSelector(".cke_button__italic.cke_button_on"));
+      Log.log("clickItalicButton", "italic button is now ON", true);
+    }
   }
 
   public MessageWallAddLinkComponentObject clickLinkButton() {
     wait.forElementVisible(linkButton);
     scrollAndClick(linkButton);
-    PageObjectLogging.log("clickLinkButton", "link button clicked", true);
+    Log.log("clickLinkButton", "link button clicked", true);
     return new MessageWallAddLinkComponentObject(driver);
   }
 
   public PhotoAddComponentObject clickImageButton() {
     wait.forElementVisible(imageButton);
     scrollAndClick(imageButton);
-    PageObjectLogging.log("clickImageButton", "image button clicked", true);
+    Log.log("clickImageButton", "image button clicked", true);
     return new PhotoAddComponentObject(driver);
   }
 
   public void verifyThreadRemoved() {
     wait.forElementVisible(removedThreadMessage);
-    PageObjectLogging.log("verifyThreadRemoved", "verifyed thread removed", true);
+    Log.log("verifyThreadRemoved", "verifyed thread removed", true);
   }
 
-  public void verifyThreadClosed(String userName, String reason, String message) {
-    refreshPage();
+  public void verifyThreadClosed(String userName, String reason) {
+    refreshPageAddingCacheBuster();
     Assertion.assertStringContains(
         driver.findElement(firstMessageWrapperBy).findElement(closeThreadInfobox).getText(),
-        userName + " closed this thread because:\n" + reason);
-    PageObjectLogging.log("verifyThreadClosed", "verifyed thread closed", true);
+        userName + " closed this thread because:\n" + reason
+    );
+    Log.log("verifyThreadClosed", "verifyed thread closed", true);
   }
 
   public void verifyThreadReopened() {
     wait.forElementPresent(closeButtonBy);
-    setDisplayStyle(firstMessageMenu, "block");
+    setDisplayStyle(FIRST_MESSAGE_MENU, "block");
     scrollAndClick(driver.findElement(firstMessageWrapperBy).findElement(moreButtonBy));
     wait.forElementPresent(closeButtonBy);
-    setDisplayStyle(firstMessageMenu, "none");
-    PageObjectLogging.log("verifyThreadReopened", "verifyed thread reopened", true);
+    setDisplayStyle(FIRST_MESSAGE_MENU, "none");
+    Log.log("verifyThreadReopened", "verifyed thread reopened", true);
   }
 
   public void verifyMessageTitle(String title) {
     wait.forTextInElement(messageTitleBy, title);
-    PageObjectLogging
-        .log("verifyMessageTitle", "message with title: " + title + ", verified", true);
+    Log.log("verifyMessageTitle", "message with title: " + title + ", verified", true);
   }
 
   public void verifyMessageText(String title, String message, String userName) {
     wait.forTextInElement(messageTitleBy, title);
-    Assertion.assertEquals(
-        driver.findElement(firstMessageWrapperBy).findElement(messageTitleBy).getText(),
-        title);
-    Assertion.assertEquals(
-        driver.findElement(firstMessageWrapperBy).findElement(messageBodyBy).getText(),
-        message);
-    Assertion.assertEquals(
-        driver.findElement(firstMessageWrapperBy).findElement(messageUserNameBy).getText(),
-        userName);
+    Assertion.assertEquals(driver.findElement(firstMessageWrapperBy)
+                               .findElement(messageTitleBy)
+                               .getText(), title);
+    Assertion.assertEquals(driver.findElement(firstMessageWrapperBy)
+                               .findElement(messageBodyBy)
+                               .getText(), message);
+    Assertion.assertEquals(driver.findElement(firstMessageWrapperBy)
+                               .findElement(messageUserNameBy)
+                               .getText(),
+                           userName
+    );
   }
 
   public void verifyMessageBoldText(String title, String message, String userName) {
     wait.forTextInElement(messageTitleBy, title);
     Assertion.assertEquals(title,
-        driver.findElement(firstMessageWrapperBy).findElement(messageTitleBy).getText());
-    Assertion.assertEquals(
-        message,
-        driver.findElement(firstMessageWrapperBy).findElement(messageBodyBy)
-            .findElement(messageTextBoldBy).getText());
+                           driver.findElement(firstMessageWrapperBy)
+                               .findElement(messageTitleBy)
+                               .getText()
+    );
+    Assertion.assertEquals(message,
+                           driver.findElement(firstMessageWrapperBy)
+                               .findElement(messageBodyBy)
+                               .findElement(messageTextBoldBy)
+                               .getText()
+    );
     Assertion.assertEquals(userName,
-        driver.findElement(firstMessageWrapperBy).findElement(messageUserNameBy).getText());
+                           driver.findElement(firstMessageWrapperBy)
+                               .findElement(messageUserNameBy)
+                               .getText()
+    );
   }
 
   public void verifyMessageItalicText(String title, String message, String userName) {
     wait.forTextInElement(messageTitleBy, title);
-    Assertion.assertEquals(title,
-        driver.findElement(firstMessageWrapperBy).findElement(messageTitleBy).getText());
-    Assertion.assertEquals(
-        message,
-        driver.findElement(firstMessageWrapperBy).findElement(messageBodyBy)
-            .findElement(messageTextItalicBy).getText());
-    Assertion.assertEquals(userName,
-        driver.findElement(firstMessageWrapperBy).findElement(messageUserNameBy).getText());
+    WebElement firstMessageWrapper = driver.findElement(firstMessageWrapperBy);
+    WebElement messageTextBox = firstMessageWrapper.findElement(messageTextBy);
+    WebElement titleTextBox = firstMessageWrapper.findElement(messageTitleBy);
+    WebElement userNameTextBox = firstMessageWrapper.findElement(messageUserNameBy);
+    WebElement italicMsgTextBox = messageTextBox.findElement(messageTextItalicBy);
+    wait.forElementVisible(messageTextBox);
+
+    Assertion.assertEquals(title, titleTextBox.getText());
+    Assertion.assertEquals(message, messageTextBox.getText());
+    Assertion.assertEquals(true, italicMsgTextBox.isDisplayed(), "Text is not italic");
+    Assertion.assertEquals(userName, userNameTextBox.getText());
   }
 
   public void verifyMessageEditText(String title, String message, String userName) {
     wait.forElementVisible(editMessageWrapper);
+    WebElement msgBodyTextBox = editMessageWrapper.findElement(messageBodyBy);
+    wait.forElementVisible(msgBodyTextBox);
+
     Assertion.assertEquals(editMessageWrapper.findElement(messageTitleBy).getText(), title);
-    Assertion.assertEquals(editMessageWrapper.findElement(messageBodyBy).getText(), message);
+    Assertion.assertEquals(msgBodyTextBox.getText(), message);
     Assertion.assertEquals(editMessageWrapper.findElement(messageUserNameBy).getText(), userName);
+  }
+
+  public void verifyMessageEditTextRenameDone(String title, String message, String userName) {
+    wait.forElementVisible(editMessageWrapper2);
+    WebElement msgBodyTextBox = editMessageWrapper2.findElement(messageBodyBy);
+    wait.forElementVisible(msgBodyTextBox);
+
+    Assertion.assertEquals(editMessageWrapper2.findElement(messageUserNameBy).getText(), userName);
   }
 
   public void verifyInternalLink(String title, String target, String text, String wikiURL) {
     wait.forTextInElement(messageTitleBy, title);
     Assertion.assertEquals(editMessageWrapper.findElement(messageTitleBy).getText(), title);
-    Assertion.assertEquals(editMessageWrapper.findElement(messageBodyBy).findElement(messageLinkBy)
-        .getAttribute("href"), wikiURL + "/wiki/" + target);
-    Assertion.assertEquals(editMessageWrapper.findElement(messageBodyBy).findElement(messageLinkBy)
-        .getText(), text);
+
+    String actualURL = editMessageWrapper.findElement(messageBodyBy)
+        .findElement(messageLinkBy)
+        .getAttribute("href")
+        .replaceAll("^http[s]?:\\/\\/", "");
+    String expectedURL = String.format("%s/wiki/%s", wikiURL, target)
+        .replaceAll("^http[s]?:\\/\\/", "");
+
+    Assertion.assertEquals(expectedURL, actualURL);
+    Assertion.assertEquals(editMessageWrapper.findElement(messageBodyBy)
+                               .findElement(messageLinkBy)
+                               .getText(), text);
   }
 
   public void verifyExternalLink(String title, String target, String text, String wikiURL) {
     wait.forTextInElement(messageTitleBy, title);
     Assertion.assertEquals(editMessageWrapper.findElement(messageTitleBy).getText(), title);
-    Assertion.assertEquals(editMessageWrapper.findElement(messageBodyBy).findElement(messageLinkBy)
-        .getAttribute("href"), target);
-    Assertion.assertEquals(editMessageWrapper.findElement(messageBodyBy).findElement(messageLinkBy)
-        .getText(), text);
+    Assertion.assertEquals(editMessageWrapper.findElement(messageBodyBy)
+                               .findElement(messageLinkBy)
+                               .getAttribute("href"), target);
+    Assertion.assertEquals(editMessageWrapper.findElement(messageBodyBy)
+                               .findElement(messageLinkBy)
+                               .getText(), text);
   }
 
   public void verifyQuote(String quoteText) {
-    Assertion.assertEquals(driver.findElement(firstMessageWrapperBy).findElement(quoteMessageBy)
+    Assertion.assertEquals(driver.findElement(firstMessageWrapperBy)
+                               .findElement(quoteMessageBy)
                                .getText(), quoteText);
   }
 
   public void verifyImageAdded(String title) {
     wait.forTextInElement(messageTitleBy, title);
     driver.findElement(firstMessageWrapperBy).findElement(imageBy);
-    PageObjectLogging.log("verifyImageAdded", "verifyed image " + title + " added", true);
+    Log.log("verifyImageAdded", "verifyed image " + title + " added", true);
   }
 
   public MessageWallThreadPageObject openThread(String threadName) {
     try {
-      for (WebElement thread : threadList) {
-        if (thread.getText().contains(threadName)) {
-          scrollAndClick(thread);
-          break;
-        }
-      }
-      return new MessageWallThreadPageObject(driver);
-    }finally {
+      threadList.stream()
+          .filter(thread -> thread.getText().contains(threadName))
+          .findFirst()
+          .ifPresent(this::scrollAndClick);
+
+      return new MessageWallThreadPageObject();
+    } finally {
       waitForPageLoad();
     }
   }
 
   public void verifyReplyAreaAvatarNotVisible() {
     waitForElementNotVisibleByElement(replyAreaAvatars);
-    PageObjectLogging.log("verifyReplyAreaAvatarNotVisible",
-        "as expected, avatar next to reply area is not visible", true);
+    Log.log("verifyReplyAreaAvatarNotVisible",
+            "as expected, avatar next to reply area is not visible",
+            true
+    );
   }
 
   public void verifyPostedMessageVideo(String title) {
     wait.forElementVisible(By.xpath("//div[@class='msg-title']/a[contains(text(), " + "'" + title
-        + "')]/../../div[@class='editarea']//a[contains(@class, 'video-thumbnail')]"));
-    PageObjectLogging.log("verifyPostedMessageImage", "message with image title verified", true);
+                                    + "')]/../../div[@class='editarea']//a[contains(@class, 'video-thumbnail')]"));
+    Log.log("verifyPostedMessageImage", "message with image title verified", true);
+  }
+
+  public boolean isEditionVisible() {
+    return isVisible(wallEdition);
   }
 }

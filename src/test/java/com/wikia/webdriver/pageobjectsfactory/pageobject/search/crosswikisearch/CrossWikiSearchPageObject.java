@@ -1,18 +1,15 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.search.crosswikisearch;
 
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.core.imageutilities.ImageHelper;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.SearchPageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.wikipage.WikiArticleHomePage;
 
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Author: Artur Dwornik Date: 28.03.13 Time: 19:29
@@ -21,19 +18,19 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
 
   @FindBy(css = ".result")
   private List<WebElement> searchResultList;
-  @FindBy(css = ".Results > :nth-child(1)")
+  @FindBy(css = ".Results > :nth-child(1), .top-community-content")
   private WebElement firstResult;
-  @FindBy(css = ".Results > :nth-child(1) > .result-description > :nth-child(2)")
+  @FindBy(css = ".Results > :nth-child(1) > .result-description > :nth-child(2), .top-community-topic")
   private WebElement firstResultVertical;
-  @FindBy(css = ".Results > :nth-child(1) .wiki-statistics.subtle > :nth-child(1)")
+  @FindBy(css = ".Results > :nth-child(1) .wiki-statistics.subtle > :nth-child(1), .top-community-stats > :nth-child(1)")
   private WebElement firstResultStatisticsPageCount;
-  @FindBy(css = ".Results > :nth-child(1) .wiki-statistics.subtle > :nth-child(2)")
+  @FindBy(css = ".Results > :nth-child(1) .wiki-statistics.subtle > :nth-child(2), .top-community-stats > :nth-child(2)")
   private WebElement firstResultStatisticsPageImages;
-  @FindBy(css = ".Results > :nth-child(1) .wiki-statistics.subtle > :nth-child(3)")
+  @FindBy(css = ".Results > :nth-child(1) .wiki-statistics.subtle > :nth-child(3), .top-community-stats > :nth-child(3)")
   private WebElement firstResultStatisticsPageVideos;
-  @FindBy(css = ".Results > :nth-child(1) .result-description > .description")
+  @FindBy(css = ".Results > :nth-child(1) .result-description > .description, .top-community-text")
   private WebElement firstResultDescription;
-  @FindBy(css = ".results-wrapper i")
+  @FindBy(css = ".results-wrapper i, .no-results")
   private WebElement noResultsCaption;
   @FindBy(css = ".wikiPromoteThumbnail")
   private List<WebElement> thumbnails;
@@ -45,9 +42,13 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
   private List<WebElement> statisticsImages;
   @FindBy(css = ".wiki-statistics>li:nth-child(3)")
   private List<WebElement> statisticsVideos;
+  @FindBy(css = ".other-communities-link a")
+  private WebElement otherCommunitiesLink;
 
-  public CrossWikiSearchPageObject(WebDriver driver) {
-    super(driver);
+  private By otherCommunitiesLinkBy = By.cssSelector(".other-communities-link a");
+
+  public CrossWikiSearchPageObject() {
+    super();
   }
 
   public void verifyQuery(String query) {
@@ -65,15 +66,24 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
     try {
       getUrl(searchUrl + "/index.php?title=Special:Search");
     } catch (TimeoutException e) {
-      PageObjectLogging.log("goToSearchPage", "timeouted when opening search page", false);
+      Log.log("goToSearchPage", "timeouted when opening search page", false);
     }
   }
 
   public CrossWikiSearchPageObject searchFor(String term) {
-    searchInput.clear();
+    this.getGlobalNavigation().clickSearch();
+    wait.forElementClickable(searchInput).clear();
     searchInput.sendKeys(term + Keys.ENTER);
-    PageObjectLogging.log("searchFor", "Search button clicked", true, driver);
+    Log.log("searchFor", "Search button clicked", true, driver);
     return this;
+  }
+
+  public void searchForWiki(String searchUrl, String term) {
+    try {
+      getUrl(searchUrl + "/Special:Search?search=" + term);
+    } catch (TimeoutException e) {
+      Log.log("searchForWiki", "timeout", false);
+    }
   }
 
   public void verifyFirstResultTitle(String wikiName) {
@@ -82,8 +92,9 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
 
   public void verifyFirstResultVertical(String vertical) {
     wait.forTextInElement(firstResultVertical, vertical);
-    Assertion
-        .assertFalse(firstResultVertical.getText().isEmpty(), "Vertical (Hub) string is empty.");
+    Assertion.assertFalse(firstResultVertical.getText().isEmpty(),
+                          "Vertical (Hub) string is empty."
+    );
   }
 
   public void verifyFirstResultDescription() {
@@ -94,19 +105,22 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
   public void verifyFirstResultPageCount() {
     wait.forElementVisible(firstResultStatisticsPageCount);
     Assertion.assertFalse(firstResultStatisticsPageCount.getText().isEmpty(),
-                          "Page count string is empty.");
+                          "Page count string is empty."
+    );
   }
 
   public void verifyFirstResultPageImages() {
     wait.forElementVisible(firstResultStatisticsPageImages);
-    Assertion
-        .assertFalse(firstResultStatisticsPageImages.getText().isEmpty(), "Images count is empty.");
+    Assertion.assertFalse(firstResultStatisticsPageImages.getText().isEmpty(),
+                          "Images count is empty."
+    );
   }
 
   public void verifyFirstResultPageVideos() {
     wait.forElementVisible(firstResultStatisticsPageVideos);
     Assertion.assertFalse(firstResultStatisticsPageVideos.getText().isEmpty(),
-                          "Results count is empty.");
+                          "Results count is empty."
+    );
   }
 
   /**
@@ -116,8 +130,10 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
    */
   public void verifyResultsCount(int expectedResultsPerPage) {
     wait.forElementVisible(resultsContainer);
-    Assertion.assertEquals(searchResultList.size(), expectedResultsPerPage,
-                           "Wrong number of results per page.");
+    Assertion.assertEquals(searchResultList.size(),
+                           expectedResultsPerPage,
+                           "Wrong number of results per page."
+    );
   }
 
   /**
@@ -143,8 +159,8 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
    * @param resultNumber zero based number of result to click
    * @return result page
    */
-  public WikiArticleHomePage openResult(int resultNumeber) {
-    WebElement resultLink = resultLinks.get(resultNumeber);
+  public WikiArticleHomePage openResult(int resultNumber) {
+    WebElement resultLink = resultLinks.get(resultNumber);
     wait.forElementVisible(resultLink);
     scrollAndClick(resultLink);
     return new WikiArticleHomePage();
@@ -152,43 +168,54 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
 
   public CrossWikiSearchPageObject prevPage() {
     scrollAndClick(paginatorPrev);
-    PageObjectLogging.log("prevPage", "Moving to prev page of search results.",
-                          true, driver);
+    Log.log("prevPage", "Moving to prev page of search results.", true, driver);
     return this;
   }
 
   public CrossWikiSearchPageObject nextPage() {
     scrollAndClick(paginatorNext);
-    PageObjectLogging.log("nextPage", "Moving to next page of search results.",
-                          true, driver);
+    Log.log("nextPage", "Moving to next page of search results.", true, driver);
     return this;
-  }
-
-  public void verifyResultsNumber(int number) {
-    wait.forElementVisible(searchResultList.get(0));
-    Assertion.assertNumber(searchResultList.size(), number, "checking number of search results");
   }
 
   public void verifyNoPagination() {
     wait.forElementNotPresent(paginationContainerBy);
-    PageObjectLogging.log("verifyNoPagination", "pagination is not visible on the page",
-                          true);
+    Log.log("verifyNoPagination", "pagination is not visible on the page", true);
+  }
+
+  public void verifyNoCommunitiesLink() {
+    wait.forElementNotPresent(otherCommunitiesLinkBy);
+    Log.log("verifyNoCommunitiesLink", "other communities link is not visible", true);
   }
 
   public void verifyNoResultsCaption() {
     wait.forElementVisible(noResultsCaption);
-    Assertion.assertEquals(noResultsCaption.getText(), "No results found.");
-    PageObjectLogging.log("verifyNoResultsCaption", "verified no results caption",
-                          true);
+    String caption = noResultsCaption.getText();
+    Assertion.assertTrue(caption.contains("No results found.") || caption.contains("no matches"));
+    Log.log("verifyNoResultsCaption", "verified no results caption", true);
   }
 
-  public void verifyThumbnails(int number) {
+  public void verifyThumbnailsAmount(int number) {
     Assertion.assertNumber(thumbnails.size(), number, "checking number of thumbnails");
+    Log.log("verifyThumbnailsAmount", "thumbnails verified", true);
+  }
+
+  public boolean areThumbnailsContainImages() {
+    String jpgOrPngImage = ".*(\\.png|\\.jpg|\\.jpeg|\\.svg|wikia-hero-image).*";
     for (WebElement elem : thumbnails) {
-      Assertion.assertStringContains(elem.getAttribute("src"), ".png");
+      String src = elem.getAttribute("src");
+      boolean isImage = Pattern.matches(jpgOrPngImage, src.toLowerCase());
+      Log.log("isImage", src, true);
+      try {
+        if (!isImage) {
+          throw new AssertionError();
+        }
+      } catch (AssertionError ass) {
+        Log.log("Thumbnail does not contain image:" + src, ass, true);
+        return false;
+      }
     }
-    PageObjectLogging.log("verifyThumbnails", "thumbnails verified",
-                          true);
+    return true;
   }
 
   public void verifyDescription(int number) {
@@ -196,8 +223,7 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
     for (WebElement elem : descriptions) {
       Assertion.assertTrue(!elem.getText().isEmpty(), "checking if description is not empty");
     }
-    PageObjectLogging.log("verifyDescriptions", "descriptions verified",
-                          true);
+    Log.log("verifyDescriptions", "descriptions verified", true);
   }
 
   public void verifyStatistics(int number) {
@@ -209,13 +235,5 @@ public class CrossWikiSearchPageObject extends SearchPageObject {
       Assertion.assertStringContains(statisticsImages.get(i).getText(), "IMAGE");
       Assertion.assertStringContains(statisticsVideos.get(i).getText(), "VIDEO");
     }
-  }
-
-  public String getFirstDescription() {
-    return firstResultDescription.getText();
-  }
-
-  public String getFirstImageText() {
-    return ImageHelper.getImageId(thumbnails.get(0));
   }
 }

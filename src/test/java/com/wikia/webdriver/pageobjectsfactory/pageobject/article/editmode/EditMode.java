@@ -1,6 +1,6 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.article.editmode;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.addtable.TableBuilderComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.gallery.GalleryBuilderComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.photo.PhotoAddComponentObject;
@@ -9,7 +9,7 @@ import com.wikia.webdriver.pageobjectsfactory.componentobject.slideshow.Slidesho
 import com.wikia.webdriver.pageobjectsfactory.componentobject.vet.VetAddVideoComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.article.ArticlePageObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.wikipage.blog.BlogPageObject;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.wikipage.blog.BlogPage;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -38,13 +38,13 @@ public class EditMode extends WikiBasePageObject {
   @FindBy(css = "a.RTESliderButton")
   private WebElement sliderButton;
 
-  @FindBy(css = "a.cke_button_ModeWysiwyg > span#cke_23_label")
+  @FindBy(css = "a.cke_button_ModeWysiwyg > span.cke_button_label")
   private WebElement visualButton;
 
-  @FindBy(css = "a.cke_button_ModeSource > span.cke_label")
+  @FindBy(css = "a.cke_button_ModeSource > span.cke_button_label")
   private WebElement sourceButton;
 
-  @FindBy(css = "a.cke_off.cke_button_table")
+  @FindBy(css = "a.cke_button_off.cke_button_table")
   private WebElement addTableButton;
 
   @FindBy(css = ".editpage-notices")
@@ -61,13 +61,13 @@ public class EditMode extends WikiBasePageObject {
     wait.forElementClickable(submitButton);
     scrollAndClick(submitButton);
 
-    PageObjectLogging.logInfo("Submit");
+    Log.info("Submit");
   }
 
   public ArticlePageObject submitArticle() {
     submit();
     wait.forElementNotPresent(submitButtonBy);
-    PageObjectLogging.logInfo("Page submitted");
+    Log.info("Page submitted");
 
     return new ArticlePageObject();
   }
@@ -78,7 +78,7 @@ public class EditMode extends WikiBasePageObject {
   public EditMode submitExpectingNotification() {
     submit();
     wait.forElementVisible(notificationForAnon);
-    PageObjectLogging.logInfo("Notification is visible");
+    Log.info("Notification is visible");
 
     return this;
   }
@@ -87,67 +87,67 @@ public class EditMode extends WikiBasePageObject {
     driver.switchTo().defaultContent();
     wait.forElementClickable(desktopPreviewButton);
     desktopPreviewButton.click();
-    PageObjectLogging.log("preview", "Page preview displayed", true);
+    Log.log("preview", "Page preview displayed", true);
     return new PreviewEditModePageObject(driver);
   }
 
-  public BlogPageObject submitBlog() {
+  public BlogPage submitBlog() {
     submit();
     wait.forElementNotPresent(submitButtonBy);
 
-    return new BlogPageObject(driver);
+    return new BlogPage();
   }
 
   public PhotoAddComponentObject clickPhotoButton() {
     wait.forElementVisible(photoButton);
     scrollAndClick(photoButton);
-    PageObjectLogging.log("clickPhotoButton", "photo button clicked", true);
+    Log.log("clickPhotoButton", "photo button clicked", true);
     return new PhotoAddComponentObject(driver);
   }
 
   public VetAddVideoComponentObject clickVideoButton() {
     wait.forElementVisible(videoButton);
     scrollAndClick(videoButton);
-    PageObjectLogging.log("clickVideoButton", "video button clicked", true);
+    Log.log("clickVideoButton", "video button clicked", true);
     return new VetAddVideoComponentObject(driver);
   }
 
   public TableBuilderComponentObject clickAddTableButton() {
-    addTableButton.click();
-    PageObjectLogging.log("addTable", "add table button clicked", true);
+    wait.forElementClickable(addTableButton).click();
+    Log.log("addTable", "add table button clicked", true);
     return new TableBuilderComponentObject(driver);
   }
 
   public SliderBuilderComponentObject clickSliderButton() {
     wait.forElementVisible(sliderButton);
     scrollAndClick(sliderButton);
-    PageObjectLogging.log("clickSliderButton", "slider button clicked", true);
+    Log.log("clickSliderButton", "slider button clicked", true);
     return new SliderBuilderComponentObject(driver);
   }
 
   public SlideshowBuilderComponentObject clickSlideshowButton() {
     wait.forElementVisible(slideshowButton);
     scrollAndClick(slideshowButton);
-    PageObjectLogging.log("clickSlideshowButton", "slideshow button clicked", true);
+    Log.log("clickSlideshowButton", "slideshow button clicked", true);
     return new SlideshowBuilderComponentObject(driver);
   }
 
   public GalleryBuilderComponentObject clickGalleryButton() {
     wait.forElementVisible(galleryButton);
     scrollAndClick(galleryButton);
-    PageObjectLogging.log("clickGalleryButton", "gallery button clicked", true);
+    Log.log("clickGalleryButton", "gallery button clicked", true);
     return new GalleryBuilderComponentObject(driver);
-  }
-
-  public SourceEditModePageObject clickSourceButton() {
-    sourceButton.click();
-    PageObjectLogging.log("clickSourceButton", "source button clicked", true);
-    return new SourceEditModePageObject(driver);
   }
 
   public VisualEditModePageObject clickVisualButton() {
     visualButton.click();
-    PageObjectLogging.log("clickVisualButton", "visual button clicked", true);
+    Log.log("clickVisualButton", "visual button clicked", true);
     return new VisualEditModePageObject();
+  }
+
+  public SourceEditModePageObject clickSourceButton() {
+    sourceButton.click();
+    Log.log("clickSourceButton", "source button clicked", true);
+    return new SourceEditModePageObject();
   }
 }

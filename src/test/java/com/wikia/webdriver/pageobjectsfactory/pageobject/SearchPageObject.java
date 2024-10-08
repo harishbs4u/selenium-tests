@@ -1,10 +1,10 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject;
 
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
+import com.wikia.webdriver.elements.communities.desktop.components.navigation.global.GlobalNavigation;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.FindBys;
@@ -15,10 +15,12 @@ public class SearchPageObject extends WikiBasePageObject {
 
   protected static final String PAGINATION_PAGES_CSS = ".paginator-page";
 
-  @FindBy(css = "#searchInput")
+  @FindBy(css = ".wds-global-navigation__search-input-wrapper input")
   protected WebElement searchInput;
+  @FindBy(css = ".wds-global-navigation__search-submit")
+  protected WebElement searchSubmit;
   @FindBy(css = "#search-v2-button")
-  protected WebElement searchButton;
+  protected WebElement searchV2Button;
   @FindBy(css = ".Results")
   protected WebElement resultsContainer;
   @FindBy(css = ".paginator-next")
@@ -31,7 +33,7 @@ public class SearchPageObject extends WikiBasePageObject {
   protected List<WebElement> resultLinks;
   @FindBys(@FindBy(css = "li.result"))
   protected List<WebElement> results;
-  @FindBy(css = ".Results > :nth-child(1) h1 > a")
+  @FindBy(css = ".Results > :nth-child(1) h1 > a, .top-community-name")
   protected WebElement firstResultLink;
   @FindBy(css = "li.result:nth-child(1) a")
   protected WebElement firstResult;
@@ -40,24 +42,24 @@ public class SearchPageObject extends WikiBasePageObject {
   @FindBy(css = ".results-wrapper i")
   protected WebElement noResultsCaption;
 
-  protected By paginationContainerBy = By.cssSelector(".wikia-paginator");
+  protected By paginationContainerBy = By.cssSelector(".wikia-paginator, .pagination");
 
   @FindBy(css = ".everything")
   private WebElement filterEverything;
 
-  public SearchPageObject(WebDriver driver) {
+  public SearchPageObject() {
     super();
   }
 
   public void clickNextPaginator() {
     scrollAndClick(paginatorNext);
-    PageObjectLogging.log("clickNextPaginator", "next paginator clicked", true);
+    Log.log("clickNextPaginator", "next paginator clicked", true);
   }
 
   public void clickPrevPaginator() {
     wait.forElementVisible(By.cssSelector(".paginator-prev"));
     scrollAndClick(paginatorPrev);
-    PageObjectLogging.log("clickPrevPaginator", "prev paginator clicked", true);
+    Log.log("clickPrevPaginator", "prev paginator clicked", true);
   }
 
   public void verifyNoResults() {
@@ -74,13 +76,12 @@ public class SearchPageObject extends WikiBasePageObject {
   }
 
   public boolean isResultPresent() {
-    wait.forElementVisible(resultCountMessage);
-    return resultCountMessage.isDisplayed();
+    return isVisible(resultCountMessage);
   }
 
   public void clickSearchButton() {
-    searchButton.click();
-    PageObjectLogging.log("clickSearchButton", "Search button was clicked", true, driver);
+    new GlobalNavigation().clickSearch();
+    Log.log("clickSearchButton", "Search button was clicked", true, driver);
   }
 
   public void setSearchTab(SearchTab tab) {

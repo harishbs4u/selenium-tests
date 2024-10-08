@@ -1,11 +1,10 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.special;
 
 import com.wikia.webdriver.common.contentpatterns.URLsContent;
-import com.wikia.webdriver.common.core.configuration.Configuration;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.pageobjectsfactory.componentobject.activity.Activity;
+import com.wikia.webdriver.pageobjectsfactory.componentobject.activity.ActivityPageFactory;
+import com.wikia.webdriver.pageobjectsfactory.componentobject.activity.ActivityType;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.FindBys;
@@ -14,142 +13,89 @@ import java.util.List;
 
 public class SpecialWikiActivityPageObject extends SpecialPageObject {
 
-  @FindBys(@FindBy(css = "li.activity-type-edit"))
-  private List<WebElement> editActivitiesList;
-  @FindBys(@FindBy(css = "li.activity-type-new"))
-  private List<WebElement> newPageActivitiesList;
-  @FindBys(@FindBy(css = "li.activity-type-categorization"))
-  private List<WebElement> categorizationActivitiesList;
+  @FindBys(@FindBy(css = ".activityfeed > li"))
+  private List<WebElement> activitiesList;
 
-  public SpecialWikiActivityPageObject(WebDriver driver) {
-    super();
-  }
+  private List<Activity> activities;
 
   public SpecialWikiActivityPageObject open() {
-    getUrl(urlBuilder.getUrlForWiki(Configuration.getWikiName())
-           + URLsContent.SPECIAL_WIKI_ACTIVITY);
+    getUrl(urlBuilder.getUrlForWikiPage(URLsContent.SPECIAL_WIKI_ACTIVITY));
+
+    this.refreshPageAddingCacheBuster();
+    this.activities = new ActivityPageFactory(activitiesList).getActivities();
 
     return this;
   }
 
   /**
-   * verifies if there is the wanted edition on WikiActivity, searching through 5 recent editions.
+   * SUS-1309: Verify title, content and author of newly submitted Wall thread is visible on Wiki
+   * Activity
+   *
+   * @param title         title of new Wall Thread that is expected to be title of entry
+   * @param threadAuthor  name of user who posted new thread who is expected to be author of entry
+   * @param threadContent content of new Wall Thread that is expected to be shown in entry
+   * @see com.wikia.webdriver.testcases.desktop.messagewall.MessageWallTests
    */
-  public void verifyRecentEdition(String articleName, String userName) {
-    Boolean ifPassed = false;
-    for (int i = 0; i < 4; i++) {
-      ifPassed = ifDetailsPresent(editActivitiesList.get(i), articleName,
-                                  userName);
-      if (ifPassed) {
-        PageObjectLogging.log("verifyRecentEdition",
-                              "WikiActivity module found recent edition that affected '"
-                              + articleName
-                              + "' and was done by user: " + userName, true);
-        break;
-      }
-    }
-    if (!ifPassed) {
-      PageObjectLogging.log("verifyRecentEdition",
-                            "edition on article  '" + articleName + "' by user: '"
-                            + userName + "', not found", false, driver);
-    }
+  public boolean isNewWallThreadActivityDisplayed(
+      String title, String threadAuthor, String threadContent
+  ) {
+    return activities.stream()
+        .filter(activity -> activity.getType() == ActivityType.WALL_POST)
+        .filter(activity -> activity.getTitleLink().getText().contains(title))
+        .filter(activity -> activity.getWallThreadAuthor().equals(threadAuthor))
+        .anyMatch(activity -> activity.getWallThreadContent().contains(threadContent));
   }
 
-  /**
-   * verifies if there is the wanted NewPage on WikiActivity, searching through 5 recent editions.
-   */
-  public void verifyRecentNewPage(String articleName, String userName) {
-    Boolean ifPassed = false;
-    for (int i = 0; i < 4; i++) {
-      ifPassed = ifDetailsPresent(newPageActivitiesList.get(i), articleName,
-                                  userName);
-      if (ifPassed) {
-        PageObjectLogging.log("verifyRecentNewPage",
-                              "WikiActivity module found recent new page: '" + articleName
-                              + "' that was created by user: " + userName, true);
-        break;
-      }
-    }
-    if (!ifPassed) {
-      PageObjectLogging.log("verifyRecentNewPage",
-                            "new page:  '" + articleName + "' by user: '"
-                            + userName + "', not found", false, driver);
-    }
-
+  public boolean isNewBlogPostActivityDisplayed(
+      String blogPostName, String userName, String blogPostContent
+  ) {
+    return isActivityDisplayedWithType(ActivityType.NEW_PAGE,
+                                       blogPostName,
+                                       userName,
+                                       blogPostContent
+    );
   }
 
-  /**
-   * verifies if there is the wanted new Blog on WikiActivity, searching through 5 recent editions.
-   */
-  public void verifyRecentNewBlogPage(String blogContent, String blogTitle, String userName) {
-    Boolean ifPassed = false;
-    for (int i = 0; i < 4; i++) {
-      ifPassed = ifNewBlogDetailsPresent(newPageActivitiesList.get(i), blogContent, blogTitle,
-                                         userName);
-      if (ifPassed) {
-        PageObjectLogging.log("verifyRecentNewBlogPage",
-                              "WikiActivity module found recent new blog titled as: '" + blogTitle
-                              + "' that was created by user: " + userName
-                              + " and contains content: " + blogContent, true);
-        break;
-      }
-    }
-    if (!ifPassed) {
-      PageObjectLogging.log("verifyRecentNewBlogPage",
-                            "WikiActivity module didn't find recent new blog titled as: '"
-                            + blogTitle
-                            + "' that was created by user: " + userName
-                            + " and containted content: " + blogContent, false, driver);
-    }
-
+  public boolean isNewArticleActivityDisplayed(String articleName, String userName) {
+    return isActivityDisplayedWithType(ActivityType.NEW_PAGE, articleName, userName);
   }
 
-  /**
-   * verifies if there is the wanted new Categorization on WikiActivity, searching through 5 recent
-   * categorizations.
-   */
-  public void verifyRecentNewCategorization(String articleName,
-                                            String userName) {
-    Boolean ifPassed = false;
-    for (int i = 0; i < 4; i++) {
-      ifPassed = ifDetailsPresent(categorizationActivitiesList.get(i), articleName,
-                                  userName);
-      if (ifPassed) {
-        PageObjectLogging.log("verifyRecentNewCategorization",
-                              "WikiActivity module found recent new Categorization on artile: '"
-                              + articleName
-                              + "' that was done by user: " + userName, true);
-        break;
-      }
-    }
-    if (!ifPassed) {
-      PageObjectLogging.log("verifyRecentNewCategorization",
-                            "WikiActivity didn't find recent new Categorization on artile: '"
-                            + articleName
-                            + "' that was done by user: " + userName, false, driver);
-    }
-
+  public boolean isCategorizationActivityDisplayed(String articleName, String userName) {
+    return isActivityDisplayedWithType(ActivityType.CATEGORIZATION, articleName, userName);
   }
 
-  private Boolean ifDetailsPresent(WebElement webElement, String articleName,
-                                   String userName) {
-    boolean condition1 = webElement.findElement(By.cssSelector("strong a"))
-        .getText().contains(articleName);
-    boolean condition2 = webElement.findElement(By.cssSelector("span a"))
-        .getText().contains(userName);
-    return (condition1 & condition2);
+  public boolean isArticleEditionActivityDisplayed(String articleName, String userName) {
+    return isActivityDisplayedWithType(ActivityType.EDIT, articleName, userName);
   }
 
-  private Boolean ifNewBlogDetailsPresent(WebElement webElement,
-                                          String blogContent, String blogTitle, String userName) {
-    boolean condition1 = ifDetailsPresent(webElement, "blog:" + userName
-                                                      + "/" + blogTitle, userName);
-    boolean condition2 = webElement.findElement(By.cssSelector("td em"))
-        .getText().contains("New blog");
-    boolean condition3 = webElement
-        .findElement(By.cssSelector("td:nth-of-type(2)")).getText()
-        .contains(blogContent);
-    return (condition1 & condition2 & condition3);
+  public Activity getMostRecentEditActivity() {
+    return getMostRecentActivityOfType(ActivityType.EDIT);
   }
 
+  private boolean isActivityDisplayedWithType(ActivityType type, String title, String author) {
+    return activities.stream()
+        .filter(activity -> activity.getType() == type)
+        .filter(activity -> activity.containsArticleName(title))
+        .anyMatch(activity -> activity.containsAuthor(author));
+  }
+
+  private boolean isActivityDisplayedWithType(
+      ActivityType type, String title, String author, String description
+  ) {
+    return activities.stream()
+        .filter(activity -> activity.getType() == type)
+        .filter(activity -> activity.containsArticleName(title))
+        .filter(activity -> activity.containsAuthor(author))
+        .anyMatch(activity -> activity.containsDescription(description));
+  }
+
+  private Activity getMostRecentActivityOfType(ActivityType type) {
+    return activities.stream()
+        .filter(activity -> activity.getType() == type)
+        .findFirst()
+        .orElseThrow(() -> new RuntimeException(String.format(
+            "Could not find any activity of type: %s",
+            type
+        )));
+  }
 }

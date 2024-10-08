@@ -62,6 +62,17 @@ public class Credentials {
   public final String emailPasswordQaart2;
   public final String emailQaart4;
   public final String emailPasswordQaart4;
+  public final String emailAnonymousUserTestWikia;
+  public final String emailAnonymousUserTestWikiaPassword;
+  public final String forgottenPasswordEmail1Address;
+  public final String forgottenPasswordEmail1Password;
+
+  public final String forgottenPasswordEmail2Address;
+  public final String forgottenPasswordEmail2Password;
+
+  public final String confirmEmailAddress;
+  public final String confirmEmailPassword;
+
   public final String userNameStaff;
   public final String userNameStaffId;
   public final String passwordStaff;
@@ -132,9 +143,6 @@ public class Credentials {
   public final String passwordItalian;
 
   public final String apiToken;
-
-  public final String httpAuthName;
-  public final String httpAuthPass;
 
   public Credentials() {
     File file = new File(Configuration.getCredentialsFilePath());
@@ -217,6 +225,23 @@ public class Credentials {
     emailPasswordQaart2 = XMLReader.getValue(file, "ci.email.qawikia2.password");
     emailQaart4 = XMLReader.getValue(file, "ci.email.qawikia4.username");
     emailPasswordQaart4 = XMLReader.getValue(file, "ci.email.qawikia4.password");
+
+    emailAnonymousUserTestWikia = XMLReader.getValue(file,
+                                                     "ci.email.anonymoususertestwikia.username"
+    );
+    emailAnonymousUserTestWikiaPassword = XMLReader.getValue(file,
+                                                             "ci.email.anonymoususertestwikia.password"
+    );
+
+    forgottenPasswordEmail1Address = XMLReader.getValue(file, "ci.email.forgotPass1.username");
+    forgottenPasswordEmail1Password = XMLReader.getValue(file, "ci.email.forgotPass1.password");
+
+    forgottenPasswordEmail2Address = XMLReader.getValue(file, "ci.email.forgotPass2.username");
+    forgottenPasswordEmail2Password = XMLReader.getValue(file, "ci.email.forgotPass2.password");
+
+    confirmEmailAddress = XMLReader.getValue("ci.email.confirmEmail.username");
+    confirmEmailPassword = XMLReader.getValue("ci.email.confirmEmail.password");
+
     userNameBlocked = XMLReader.getValue(file, "ci.user.tooManyLoginAttempts.username");
     passwordBlocked = XMLReader.getValue(file, "ci.user.tooManyLoginAttempts.password");
 
@@ -242,9 +267,6 @@ public class Credentials {
     apiToken = XMLReader.getValue(file, "ci.api.token");
 
     youTubeApiKey = XMLReader.getValue(file, "ci.api.youtube.key");
-
-    httpAuthName = XMLReader.getValue("fandom.auth.username");
-    httpAuthPass = XMLReader.getValue("fandom.auth.password");
   }
 
   public String getUserBaseOnEditorPref(EditorPref editorPref) {

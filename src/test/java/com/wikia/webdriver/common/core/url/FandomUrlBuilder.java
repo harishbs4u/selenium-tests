@@ -1,45 +1,46 @@
 package com.wikia.webdriver.common.core.url;
 
 import com.wikia.webdriver.common.core.configuration.Configuration;
+import com.wikia.webdriver.common.core.configuration.EnvType;
 
-public class FandomUrlBuilder {
+import static com.wikia.webdriver.common.core.configuration.EnvType.PROD;
 
-  private static final String FANDOM_URL = "fandom.wikia.com";
+public class FandomUrlBuilder extends BaseUrlBuilder {
+
+  private static final String FANDOM_HOSTNAME = "fandom.com";
   private static final String ARTICLE_PATH = "articles";
-  public static final String ENV_PROD = "prod";
-  public static final String ENV_ADENG = "adeng";
-  public static final String ENV_QA = "qa";
-
-  private String browser;
-  private String env;
+  private static final String TOPICS_PATH = "topics";
 
   public FandomUrlBuilder() {
-    this.env = Configuration.getEnv();
-    this.browser = Configuration.getBrowser();
+    super(Configuration.getEnv());
   }
 
-  public FandomUrlBuilder(String env) {
-    this.env = env;
+  public String getFandomUrl() {
+    return getFandomUrl(envType);
   }
 
-  public FandomUrlBuilder(String env, String browser) {
-    this.env = env;
-    this.browser = browser;
-  }
-
-  public String getUrlForFandomPage(String pageTitle) {
-    String baseUrl = FANDOM_URL + "/" + ARTICLE_PATH + "/" + pageTitle;
-    if (!env.equals(ENV_PROD)) {
-      baseUrl = env + "." + baseUrl;
+  public String getFandomUrl(EnvType envType) {
+    String hostname = FANDOM_HOSTNAME;
+    if (!envType.equals(PROD)) {
+      hostname = env + "." + hostname;
     }
-    return "http://" + baseUrl;
+
+    return HTTP_PREFIX + hostname + "/";
   }
 
-  public String getUrlForFandomHub(String hub) {
-    String baseUrl = FANDOM_URL + "/" + hub;
-    if (!env.equals(ENV_PROD)) {
-      baseUrl = env + "." + baseUrl;
-    }
-    return "http://" + baseUrl;
+  public String getFandomPageUrl(String path) {
+    return addPathToUrl(getFandomUrl(), path);
+  }
+
+  public String getUrlForFandomArticlePage(String pageTitle) {
+    return getFandomUrl() + ARTICLE_PATH + "/" + pageTitle;
+  }
+
+  public String getUrlForFandomTopic(String topic) {
+    return getFandomUrl() + TOPICS_PATH + "/" + topic;
+  }
+
+  public String getUrlForFandomVideoPage(String videoPage) {
+    return getFandomUrl() + videoPage;
   }
 }

@@ -1,5 +1,5 @@
 package com.wikia.webdriver.common.skin;
 
 public enum Skin {
-  OASIS, MERCURY, WIKIAMOBILE
+  OASIS, DISCUSSIONS, MOBILE_WIKI
 }

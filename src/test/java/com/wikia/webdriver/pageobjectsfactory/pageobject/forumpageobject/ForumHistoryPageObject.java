@@ -1,6 +1,6 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.forumpageobject;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
 import org.openqa.selenium.WebDriver;
@@ -23,7 +23,6 @@ public class ForumHistoryPageObject extends WikiBasePageObject {
   public void verifyImportandPageElements() {
     wait.forElementVisible(threadHistoryTable);
     wait.forTextInElement(creatorActionCell, "created this thread");
-    PageObjectLogging
-        .log("verifyImportandPageElements", "thread history page basic content verified", true);
+    Log.log("verifyImportandPageElements", "thread history page basic content verified", true);
   }
 }

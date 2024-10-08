@@ -2,7 +2,7 @@ package com.wikia.webdriver.pageobjectsfactory.pageobject.special.multiwikifinde
 
 import com.wikia.webdriver.common.core.Assertion;
 import com.wikia.webdriver.common.dataprovider.SearchDataProvider;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
 import org.openqa.selenium.By;
@@ -17,8 +17,8 @@ public class SpecialMultiWikiFinderPageObject extends WikiBasePageObject {
 
   private static final String LIST_OF_LINKS_SELECTOR = ".special > li > a";
   private static final String
-      LINKS_LIMIT =
-      "a[href*='/wiki/Special:Multiwikifinder?limit=%limit%']";
+      LINKS_LIMIT
+      = "a[href*='/wiki/Special:Multiwikifinder?limit=%limit%']";
 
   @FindBy(css = "#mw-content-text input[type=submit]")
   private WebElement findButton;
@@ -44,21 +44,13 @@ public class SpecialMultiWikiFinderPageObject extends WikiBasePageObject {
 
   public void verifyEmptyPagename() {
     wait.forElementNotPresent(By.cssSelector(".mw-spcontent > p"));
-    PageObjectLogging.log(
-        "verifyEmptyPageName",
-        "Empty pagename is not founded",
-        true, driver
-    );
+    Log.log("verifyEmptyPageName", "Empty pagename is not founded", true, driver);
   }
 
   public void compareResultsCount(int limit) {
     if (limit == 0) {
       wait.forElementNotPresent(By.cssSelector(LIST_OF_LINKS_SELECTOR));
-      PageObjectLogging.log(
-          "verifyNoPagenameFounded",
-          "Not existing pagename is not founded",
-          true, driver
-      );
+      Log.log("verifyNoPagenameFounded", "Not existing pagename is not founded", true, driver);
     } else {
       wait.forElementVisible(listOfLinks.get(0));
       Assertion.assertTrue(listOfLinks.size() <= limit);
@@ -96,5 +88,4 @@ public class SpecialMultiWikiFinderPageObject extends WikiBasePageObject {
       compareResultsCount(limit);
     }
   }
-
 }

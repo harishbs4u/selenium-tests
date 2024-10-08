@@ -1,58 +1,51 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.adsbase;
 
-import com.wikia.webdriver.common.contentpatterns.AdsFandomContent;
+import com.wikia.webdriver.common.contentpatterns.AdSlot;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.FindBy;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.openqa.selenium.*;
 
 public class AdsFandomObject extends AdsBaseObject {
 
-  @FindBy(css = "div[id$='TOP_LEADERBOARD_0__container__']")
-  protected WebElement topLeaderboardElement;
-
-  @FindBy(css = "div[id$='BOTTOM_LEADERBOARD_0__container__']")
-  protected WebElement bottomLeaderboardElement;
-
-  @FindBy(css = "div[id$='TOP_BOXAD_0__container__']")
-  protected WebElement topBoxadElement;
-
-  @FindBy(css = "div[id$='INCONTENT_BOXAD_0__container__']")
-  protected WebElement incontentBoxadElement;
-
-  @FindBy(css = "div[id$='BOTTOM_BOXAD_0__container__']")
-  protected WebElement bottomBoxadElement;
-
-  protected final Map<String, WebElement> slots;
+  private static final By MOBILE_NAVIGATION_BAR = By.cssSelector(".global-navigation-mobile");
+  private static final By DESKTOP_NAVIGATION_BAR = By.cssSelector(".wds-global-navigation");
 
   public AdsFandomObject(WebDriver driver, String testedPage) {
-    super(driver, testedPage);
+    super(testedPage);
+  }
 
-    slots = new HashMap<>();
-    slots.put(AdsFandomContent.TOP_LEADERBOARD, topLeaderboardElement);
-    slots.put(AdsFandomContent.BOTTOM_LEADERBOARD, bottomLeaderboardElement);
-    slots.put(AdsFandomContent.TOP_BOXAD, topBoxadElement);
-    slots.put(AdsFandomContent.INCONTENT_BOXAD, incontentBoxadElement);
-    slots.put(AdsFandomContent.BOTTOM_BOXAD, bottomBoxadElement);
+  public AdsFandomObject(WebDriver driver, String testedPage, Dimension resolution) {
+    super(driver, testedPage, resolution);
+  }
+
+  private WebElement findSlotElement(AdSlot slot) {
+    return driver.findElement(By.cssSelector(slot.getId()));
+  }
+
+  @Override
+  public void waitForPageLoad() {
+    wait.forElementPresent(By.cssSelector("body"));
   }
 
   public void triggerOnScrollSlots() {
     jsActions.scrollToBottom();
   }
 
-  public void verifySlot(String slotName) {
-    String selector = AdsFandomContent.getSlotSelector(slotName);
+  public void fixScrollPositionByNavbarOnF2(boolean isMobile) {
+    By element = isMobile ? MOBILE_NAVIGATION_BAR : DESKTOP_NAVIGATION_BAR;
 
-    jsActions.scrollToElement(wait.forElementVisible(By.cssSelector(selector)));
-    verifyAdVisibleInSlot(selector, slots.get(slotName));
+    int navbarHeight = driver.findElement(element).getSize().getHeight();
+    jsActions.scrollBy(0, -navbarHeight);
   }
 
-  public WebElement getSlot(String slotName) {
-    String selector = AdsFandomContent.getSlotSelector(slotName);
+  public void verifySlot(AdSlot slot) {
+    String selector = slot.getId();
+
+    scrollTo(slot.getId());
+    verifyAdVisibleInSlot(selector, findSlotElement(slot));
+  }
+
+  public WebElement getSlot(AdSlot slot) {
+    String selector = slot.getId();
 
     if (isElementOnPage(By.cssSelector(selector))) {
       return driver.findElement(By.cssSelector(selector));

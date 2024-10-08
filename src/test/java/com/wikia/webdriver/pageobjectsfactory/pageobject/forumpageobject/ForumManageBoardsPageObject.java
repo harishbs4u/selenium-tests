@@ -1,20 +1,22 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.forumpageobject;
 
+import com.wikia.webdriver.common.contentpatterns.URLsContent;
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.BasePageObject;
+import com.wikia.webdriver.common.logging.Log;
+import com.wikia.webdriver.elements.communities.desktop.components.notifications.Notification;
+import com.wikia.webdriver.elements.communities.desktop.components.notifications.NotificationType;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
-import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.Select;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.stream.Collectors;
 
-public class ForumManageBoardsPageObject extends BasePageObject {
+public class ForumManageBoardsPageObject extends WikiBasePageObject {
 
   @FindBy(css = "#CreateNewBoardButton")
   private WebElement createBoardButton;
@@ -35,34 +37,28 @@ public class ForumManageBoardsPageObject extends BasePageObject {
   @FindBy(xpath = "//ul[@class='boards']//li[2]//a")
   private WebElement secondForumLink;
 
-  public ForumManageBoardsPageObject(WebDriver driver) {
-    super();
-    PageFactory.initElements(driver, this);
-  }
-
   private void openCreateNewBoardForm() {
     wait.forElementVisible(createBoardButton);
     createBoardButton.click();
-    PageObjectLogging.log("openCreateNewBoardForm", "create new board form opened", true);
+    Log.log("openCreateNewBoardForm", "create new board form opened", true);
   }
 
   private void typeBoardTitle(String title) {
     wait.forElementVisible(boardTitleField);
     boardTitleField.sendKeys(title);
-    PageObjectLogging.log("typeBoardTitle", "board title: '" + title + "' typed in", true);
+    Log.log("typeBoardTitle", "board title: '" + title + "' typed in", true);
   }
 
   private void typeBoradDescription(String description) {
     wait.forElementVisible(boardDescriptionField);
     boardDescriptionField.sendKeys(description);
-    PageObjectLogging
-        .log("typeBoardDescription", "board description: '" + description + "' typed in", true);
+    Log.log("typeBoardDescription", "board description: '" + description + "' typed in", true);
   }
 
   private void submitNewBoard() {
     wait.forElementVisible(boardSubmitButton);
     scrollAndClick(boardSubmitButton);
-    PageObjectLogging.log("submitNewBoard", "new board submitted", true);
+    Log.log("submitNewBoard", "new board submitted", true);
   }
 
   public void createNewBoard(String title, String description) {
@@ -72,19 +68,17 @@ public class ForumManageBoardsPageObject extends BasePageObject {
     submitNewBoard();
   }
 
-  public void verifyBoardCreated(String title, String description) {
+  public boolean verifyBoardCreated(String title, String description) {
     wait.forElementVisible(By.xpath("//ul/li//a[contains(text(), '" + title.replaceAll("_", " ")
                                     + "')]/../../../p[contains(text(), '" + description + "')]"));
-    PageObjectLogging.log("verifyBoardCreated", "recently created board verified", true);
+    return true;
   }
 
   private void clickDeleteForum(String name) {
-    WebElement
-        deleteButton =
-        wait.forElementVisible(By.xpath(
-            "//a[contains(text(), '" + name + "')]/../..//img[@class='sprite trash']"));
+    WebElement deleteButton = wait.forElementVisible(By.xpath(
+        "//a[contains(text(), '" + name + "')]/../..//img[@class='sprite trash']"));
     scrollAndClick(deleteButton);
-    PageObjectLogging.log("clickDeleteForum", "delete forum button clicked", true);
+    Log.log("clickDeleteForum", "delete forum button clicked", true);
   }
 
   private void confirmDeleteForum(String deletedName, String mergerdName) {
@@ -92,20 +86,22 @@ public class ForumManageBoardsPageObject extends BasePageObject {
     deleteBoardConfirmationField.sendKeys(deletedName);
     Select select = new Select(mergeToBoard);
     select.selectByVisibleText(mergerdName);
-    PageObjectLogging.log("confirmDeleteForum", "delete forum form populated", true);
+    Log.log("confirmDeleteForum", "delete forum form populated", true);
   }
 
   private void clickDeleteAndMergeForum() {
     wait.forElementVisible(deleteAndMergeButton);
     scrollAndClick(deleteAndMergeButton);
-    PageObjectLogging.log("clickDeleteAndMergeForum", "delete and merge button clicked", true);
+    Log.log("clickDeleteAndMergeForum", "delete and merge button clicked", true);
   }
 
   private void verifyForumDeletedText(String deletedName) {
-    wait.forElementVisible(By.xpath("//div[@class='banner-notification confirm']" +
-                                    "/div[@class='msg' and contains(text(), '\"Board:" + deletedName
-                                    + "\" has been deleted.')]"));
-    PageObjectLogging.log("verifyForumDeletedText", "forum deleted text verified", true);
+    Assertion.assertListContains(getNotifications(NotificationType.CONFIRM).stream()
+                                     .map(Notification::getMessage)
+                                     .collect(Collectors.toList()),
+                                 "\"Board:" + deletedName + "\" has been deleted."
+    );
+    Log.log("verifyForumDeletedText", "forum deleted text verified", true);
   }
 
   public void deleteForum(String sourceForumName, String destinationForumName) {
@@ -115,48 +111,40 @@ public class ForumManageBoardsPageObject extends BasePageObject {
     verifyForumDeletedText(sourceForumName);
   }
 
-  public String getFirstForumName() {
-    wait.forElementVisible(firstForumLink);
-    return firstForumLink.getText();
+  public boolean verifyForumExists(String forumName, String wikiURL) {
+    String temp = driver.getCurrentUrl();
+    try {
+      getUrl(wikiURL + "/wiki/Board:" + URLEncoder.encode(forumName, "UTF-8").replace("+", "_"));
+      wait.forElementVisible(By.xpath(
+              "//h1[contains(text(), '" + forumName.replace("_", " ") + "')]"));
+    } catch (UnsupportedEncodingException e) {
+      Log.info("Forum not exists", e);
+      return false;
+    }
+    getUrl(temp);
+    return true;
   }
 
-  public String getSecondForumName() {
-    wait.forElementVisible(secondForumLink);
-    return secondForumLink.getText();
-  }
-
-  public void verifyForumExists(String forumName, String wikiURL) {
+  public boolean verifyForumNotExists(String forumName, String wikiURL) {
     String temp = driver.getCurrentUrl();
     try {
 
       getUrl(wikiURL + "/wiki/Board:" + URLEncoder.encode(forumName, "UTF-8").replace("+", "_"));
     } catch (UnsupportedEncodingException e) {
-      PageObjectLogging.log("verifyForumExists", e, false);
+      Log.info("Forum exists", e);
+      return false;
     }
-    wait.forElementVisible(
-        By.xpath("//h1[contains(text(), '" + forumName.replace("_", " ") + "')]"));
+    wait.forElementNotVisible(By.xpath(
+            "//div//h4//a[contains(text(), '" + forumName.replace("_", " ") + "')]"));
     getUrl(temp);
-    PageObjectLogging.log("verifyForumExists", "verified forum exists", true);
-  }
-
-  public void verifyForumNotExists(String forumName, String wikiURL) {
-    try {
-      getUrl(wikiURL + "/wiki/Board:" + URLEncoder.encode(forumName, "UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      PageObjectLogging.log("verifyForumNotExists", e, false);
-    }
-    wait.forElementVisible(By.xpath(
-        "//div[contains(text(), \"We couldn't find a board with that title.  Here's the list of forum boards.\")]"));
-    PageObjectLogging.log("verifyForumNotExists", "verified forum not exists", true);
+    return true;
   }
 
   private void clickModifyForum(String forumName) {
-    WebElement
-        editPecil =
-        wait.forElementVisible(By.xpath(
-            "//a[contains(text(), '" + forumName + "')]/../..//img[@class='sprite edit-pencil']"));
+    WebElement editPecil = wait.forElementVisible(By.xpath(
+        "//a[contains(text(), '" + forumName + "')]/../..//img[@class='sprite edit-pencil']"));
     scrollAndClick(editPecil);
-    PageObjectLogging.log("clickModifyForum", "modify forum button clicked", true);
+    Log.log("clickModifyForum", "modify forum button clicked", true);
   }
 
   private void clearEditBoardFields() {
@@ -164,7 +152,7 @@ public class ForumManageBoardsPageObject extends BasePageObject {
     wait.forElementVisible(boardDescriptionField);
     boardTitleField.clear();
     boardDescriptionField.clear();
-    PageObjectLogging.log("clickEditBoardFields", "edit boards fields cleared", true);
+    Log.log("clickEditBoardFields", "edit boards fields cleared", true);
   }
 
   public void editForum(String forumName, String newTitle, String newDescription) {
@@ -175,25 +163,31 @@ public class ForumManageBoardsPageObject extends BasePageObject {
     submitNewBoard();
   }
 
+  public int getBoardPosition(String boardName) {
+    return driver.findElement(By.xpath("//a[contains(text(), '" + boardName + "')]/.."))
+        .getLocation()
+        .getY();
+  }
+
   public void clickMoveDown(String forumName) {
-    String temp = getFirstForumName();
-    WebElement
-        down =
-        wait.forElementVisible(By.xpath(
-            "//a[contains(text(), '" + forumName + "')]/../..//span[@class='movedown']"));
+    WebElement down = wait.forElementVisible(By.xpath(
+        "//a[contains(text(), '" + forumName + "')]/../..//span[@class='movedown']"));
     down.click();
-    Assertion.assertEquals(getSecondForumName(), temp);
-    PageObjectLogging.log("clickMoveDown", "move down button clicked", true);
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      Log.info("Sleep interrupted while moving forum", e);
+    }
   }
 
   public void clickMoveUp(String forumName) {
-    String temp = getSecondForumName();
-    WebElement
-        up =
-        wait.forElementVisible(By.xpath(
-            "//a[contains(text(), '" + forumName + "')]/../..//span[@class='moveup']"));
+    WebElement up = wait.forElementVisible(By.xpath(
+        "//a[contains(text(), '" + forumName + "')]/../..//span[@class='moveup']"));
     up.click();
-    Assertion.assertEquals(getFirstForumName(), temp);
-    PageObjectLogging.log("clickMoveDown", "move up button clicked", true);
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      Log.info("Sleep interrupted while moving forum", e);
+    }
   }
 }

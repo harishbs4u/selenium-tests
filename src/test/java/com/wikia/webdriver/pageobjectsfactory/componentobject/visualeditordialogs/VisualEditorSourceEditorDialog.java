@@ -1,6 +1,6 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.visualeditordialogs;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.visualeditor.VisualEditorPageObject;
 
 import org.openqa.selenium.By;
@@ -27,7 +27,7 @@ public class VisualEditorSourceEditorDialog extends VisualEditorDialog {
     applyChangesButton.click();
     waitForElementNotVisibleByElement(loadingIndicator);
     waitForDialogNotVisible();
-    return new VisualEditorPageObject(driver);
+    return new VisualEditorPageObject();
   }
 
   public void typeInEditArea(String text) {
@@ -35,8 +35,9 @@ public class VisualEditorSourceEditorDialog extends VisualEditorDialog {
     waitForElementNotVisibleByElement(loadingIndicator);
     WebElement editArea = dialog.findElement(editAreaBy);
     wait.forElementClickable(editArea);
+    editArea.click();
     editArea.sendKeys(text);
     waitForValueToBePresentInElementsAttributeByElement(editArea, "value", text);
-    PageObjectLogging.log("typeInEditArea", "Typed " + text, true, driver);
+    Log.log("typeInEditArea", "Typed " + text, true, driver);
   }
 }

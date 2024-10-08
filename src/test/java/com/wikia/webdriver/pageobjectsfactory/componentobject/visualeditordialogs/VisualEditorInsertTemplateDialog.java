@@ -1,7 +1,7 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.visualeditordialogs;
 
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -22,20 +22,18 @@ public class VisualEditorInsertTemplateDialog extends VisualEditorDialog {
   private List<WebElement> suggestedTemplates;
   @FindBy(css = ".oo-ui-searchWidget-results:not(.ve-ui-wikiaTemplateSearchWidget-suggestions)")
   private WebElement resultWidget;
-  @FindBy(
-      css = ".oo-ui-searchWidget-results:not(.ve-ui-wikiaTemplateSearchWidget-suggestions) " +
-            ".ve-ui-wikiaTemplateOptionWidget")
+  @FindBy(css = ".oo-ui-searchWidget-results:not(.ve-ui-wikiaTemplateSearchWidget-suggestions) "
+                + ".ve-ui-wikiaTemplateOptionWidget")
   private List<WebElement> resultTemplates;
   @FindBy(css = ".oo-ui-searchWidget-query .oo-ui-pendingElement-pending")
   private WebElement queryPending;
 
   private By labelBy = By.cssSelector(".oo-ui-labelElement-label");
-  private By
-      suggestedTemplatesBy =
-      By.cssSelector(".ve-ui-wikiaTemplateSearchWidget-suggestions div");
-  private By resulteTemplateBy =
-      By.cssSelector(".oo-ui-searchWidget-results:not(.ve-ui-wikiaTemplateSearchWidget-suggestions)"
-                   + " .ve-ui-wikiaTemplateOptionWidget");
+  private By suggestedTemplatesBy = By.cssSelector(
+      ".ve-ui-wikiaTemplateSearchWidget-suggestions div");
+  private By resulteTemplateBy = By.cssSelector(
+      ".oo-ui-searchWidget-results:not(.ve-ui-wikiaTemplateSearchWidget-suggestions)"
+      + " .ve-ui-wikiaTemplateOptionWidget");
 
   public VisualEditorInsertTemplateDialog(WebDriver driver) {
     super(driver);
@@ -46,7 +44,7 @@ public class VisualEditorInsertTemplateDialog extends VisualEditorDialog {
     wait.forElementVisible(searchInput);
     searchInput.sendKeys(searchString);
     waitForValueToBePresentInElementsAttributeByElement(searchInput, "value", searchString);
-    PageObjectLogging.log(
+    Log.log(
         "typeInSearchInput",
         "Typed '" + searchString + "' into the template search textfield",
         true
@@ -55,7 +53,7 @@ public class VisualEditorInsertTemplateDialog extends VisualEditorDialog {
 
   public void clearSearchInput() {
     searchInput.clear();
-    PageObjectLogging.log("clearSearchInput", "Cleared the template search input field", true);
+    Log.log("clearSearchInput", "Cleared the template search input field", true);
   }
 
   public VisualEditorEditTemplateDialog selectSuggestedTemplate(int index) {
@@ -63,11 +61,7 @@ public class VisualEditorInsertTemplateDialog extends VisualEditorDialog {
     wait.forElementVisible(suggestedWidget);
     WebElement selected = suggestedTemplates.get(index).findElement(labelBy);
     selected.click();
-    PageObjectLogging.log(
-        "selectSuggestedTemplate",
-        "Suggested template selected: " + selected.getText(),
-        true
-    );
+    Log.log("selectSuggestedTemplate", "Suggested template selected: " + selected.getText(), true);
     return new VisualEditorEditTemplateDialog(driver);
   }
 
@@ -77,11 +71,7 @@ public class VisualEditorInsertTemplateDialog extends VisualEditorDialog {
     wait.forElementVisible(resultWidget);
     WebElement selected = resultTemplates.get(index).findElement(labelBy);
     selected.click();
-    PageObjectLogging.log(
-        "selectResultTemplate",
-        "Search result template selected: " + selected.getText(),
-        true
-    );
+    Log.log("selectResultTemplate", "Search result template selected: " + selected.getText(), true);
     return new VisualEditorEditTemplateDialog(driver);
   }
 
@@ -93,18 +83,17 @@ public class VisualEditorInsertTemplateDialog extends VisualEditorDialog {
     wait.forElementVisible(resultWidget);
     waitForElementNotVisibleByElement(queryPending);
     Assertion.assertTrue(getNumberOfResultTemplates() > 0, "No result template shown.");
-    PageObjectLogging.log("verifyIsResultTemplate", "Result templates found", true);
+    Log.log("verifyIsResultTemplate", "Result templates found", true);
   }
 
   public void verifyNoResultTemplate() {
     waitForElementNotVisibleByElement(queryPending);
     Assertion.assertTrue(getNumberOfResultTemplates() == 0, "There is result template shown.");
-    PageObjectLogging.log("verifyNoResultTemplate", "No result templates found", true);
+    Log.log("verifyNoResultTemplate", "No result templates found", true);
   }
 
   public void verifyIsSuggestedTemplate() {
-    Assertion
-        .assertTrue(isElementOnPage(suggestedTemplatesBy), "No suggested template shown.");
-    PageObjectLogging.log("verifyIsSuggestedTemplate", "Suggested templates found", true);
+    Assertion.assertTrue(isElementOnPage(suggestedTemplatesBy), "No suggested template shown.");
+    Log.log("verifyIsSuggestedTemplate", "Suggested templates found", true);
   }
 }

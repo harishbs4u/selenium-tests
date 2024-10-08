@@ -11,8 +11,11 @@ config.xml
 config.yml
 chromedriver.log
 bin/
+out/
 build/
+classes/
 logs/
+classes/
 target/
 test-output/
 Thumbs.db
@@ -20,3 +23,4 @@ tmp.exe
 selenium-config/
 caches/
 src/test/resources/ImagesForUploadTests/random_image.png
+velocity.log

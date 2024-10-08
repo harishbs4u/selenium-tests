@@ -1,30 +1,33 @@
 package com.wikia.webdriver.common.core.api;
 
+import static org.testng.util.Strings.escapeHtml;
+
 import com.wikia.webdriver.common.core.Helios;
 import com.wikia.webdriver.common.core.helpers.User;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.core.url.UrlBuilder;
+import com.wikia.webdriver.common.logging.Log;
+import com.wikia.webdriver.common.remote.operations.http.PostRemoteOperation;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.openqa.selenium.WebDriverException;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public abstract class ApiCall {
 
-  private static String ERROR_MESSAGE = "Problem with API call";
-
   protected static String URL_STRING = null;
+  private static String ERROR_MESSAGE = "Problem with API call";
 
   protected ApiCall() {
   }
@@ -45,37 +48,44 @@ public abstract class ApiCall {
    */
   abstract protected ArrayList<BasicNameValuePair> getParams();
 
+  /**
+   * This enables passing username as string instead from ENUM.
+   *
+   * @return Username to log in.
+   */
+  abstract protected String getUserName();
+
   public void call() {
     try {
-      URL url = new URL(getURL());
-      CloseableHttpClient httpClient = HttpClientBuilder.create().disableAutomaticRetries().build();
-      HttpPost httpPost = getHtppPost(url);
+      CloseableHttpClient httpClient = HttpClientBuilder.create()
+          .disableAutomaticRetries()
+          .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+          .build();
+      HttpPost httpPost = new HttpPost(UrlBuilder.stripUrlFromEnvSpecificPartAndDowngrade(getURL()));
+      PostRemoteOperation.setBorderProxy(httpPost);
       // set header
-      if (getUser() != null) {
-        httpPost.addHeader("X-Wikia-AccessToken", Helios.getAccessToken(getUser()));
+      PostRemoteOperation.addXstagingHeaderIfNeeded(httpPost);
+
+      if (getUserName() != null) {
+        httpPost.addHeader("X-Wikia-AccessToken", Helios.getAccessToken(getUserName()));
+      } else if (getUser() != null) {
+        httpPost.addHeader("X-Wikia-AccessToken", Helios.getAccessToken(getUser().getUserName()));
       }
       // set query params
       if (getParams() != null) {
         httpPost.setEntity(new UrlEncodedFormEntity(getParams(), StandardCharsets.UTF_8));
       }
 
-      httpClient.execute(httpPost);
+      CloseableHttpResponse resp = httpClient.execute(httpPost);
 
-      PageObjectLogging.log("CONTENT PUSH", "Content posted to: " + URL_STRING, true);
+      Log.info("CONTENT PUSH: ", "Content posted to: " + httpPost.toString());
+      Log.info("CONTENT PUSH: ", "Response: " + escapeHtml(EntityUtils.toString(resp.getEntity(), "UTF-8")));
     } catch (ClientProtocolException e) {
-      PageObjectLogging.log("EXCEPTION", ExceptionUtils.getStackTrace(e), false);
+      Log.log("EXCEPTION", ExceptionUtils.getStackTrace(e), false);
       throw new WebDriverException(ERROR_MESSAGE);
     } catch (IOException e) {
-      PageObjectLogging.log("IO EXCEPTION", ExceptionUtils.getStackTrace(e), false);
-      throw new WebDriverException(ERROR_MESSAGE);
-    } catch (URISyntaxException e) {
-      PageObjectLogging.log("URI_SYNTAX EXCEPTION", ExceptionUtils.getStackTrace(e), false);
+      Log.log("IO EXCEPTION", ExceptionUtils.getStackTrace(e), false);
       throw new WebDriverException(ERROR_MESSAGE);
     }
-  }
-
-  public static HttpPost getHtppPost(URL url) throws URISyntaxException {
-    return new HttpPost(new URI(url.getProtocol(), url.getUserInfo(), url.getHost(), url.getPort(),
-        url.getPath(), url.getQuery(), url.getRef()));
   }
 }

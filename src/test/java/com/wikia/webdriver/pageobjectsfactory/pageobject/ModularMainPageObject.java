@@ -3,7 +3,7 @@ package com.wikia.webdriver.pageobjectsfactory.pageobject;
 import com.wikia.webdriver.common.contentpatterns.PageContent;
 import com.wikia.webdriver.common.core.Assertion;
 import com.wikia.webdriver.common.core.CommonUtils;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.Keys;
@@ -42,7 +42,6 @@ public class ModularMainPageObject extends WikiBasePageObject {
   @FindBy(css = ".image-window")
   private WebElement imageWindowDragging;
 
-
   public ModularMainPageObject(WebDriver driver) {
     super();
     PageFactory.initElements(driver, this);
@@ -50,7 +49,7 @@ public class ModularMainPageObject extends WikiBasePageObject {
 
   public void verifyMoMImage() {
     wait.forElementVisible(heroImageModule);
-    PageObjectLogging.log("verifyMoMImage", "Hero module image is visible", true);
+    Log.log("verifyMoMImage", "Hero module image is visible", true);
   }
 
   public void clickUpdateCoverImageLink() {
@@ -61,13 +60,12 @@ public class ModularMainPageObject extends WikiBasePageObject {
   public void selectFileToUpload(String file) {
     updateCoverImageInput.sendKeys(CommonUtils.getAbsolutePathForFile(ClassLoader.getSystemResource(
         "ImagesForUploadTests/" + file).getPath()));
-    PageObjectLogging.log("typeInFileToUploadPath", "type file " + file + " to upload it", true);
+    Log.log("typeInFileToUploadPath", "type file " + file + " to upload it", true);
   }
 
   public void verifyDragToRepositionText() {
     wait.forElementVisible(dragToRepositionText);
-    PageObjectLogging.log("verifyDragToRepositionText",
-        "Drag to reposition text message is visible", true);
+    Log.log("verifyDragToRepositionText", "Drag to reposition text message is visible", true);
   }
 
   public void clickPublishButton() {
@@ -84,8 +82,7 @@ public class ModularMainPageObject extends WikiBasePageObject {
     wait.forElementVisible(descriptionEditField);
     descriptionEditField.clear();
     descriptionEditField.sendKeys(momDescription);
-    PageObjectLogging.log("typeMoMDescription", momDescription + "MoM description was typed in",
-        true);
+    Log.log("typeMoMDescription", momDescription + "MoM description was typed in", true);
   }
 
   public void clickDescriptionPublishButton() {
@@ -158,7 +155,10 @@ public class ModularMainPageObject extends WikiBasePageObject {
 
   public void moveCoverImage() {
     Actions actions = new Actions(driver);
-    actions.clickAndHold(imageWindowDragging).clickAndHold().moveByOffset(-200, -200).release()
+    actions.clickAndHold(imageWindowDragging)
+        .clickAndHold()
+        .moveByOffset(-200, -200)
+        .release()
         .perform();
   }
 

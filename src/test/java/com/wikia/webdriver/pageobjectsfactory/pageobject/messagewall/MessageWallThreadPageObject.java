@@ -3,7 +3,6 @@ package com.wikia.webdriver.pageobjectsfactory.pageobject.messagewall;
 import com.wikia.webdriver.common.core.Assertion;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.minieditor.MiniEditorComponentObject;
 
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
@@ -17,10 +16,8 @@ public class MessageWallThreadPageObject extends MessageWall {
   private List<WebElement> lastReplyEditor;
   @FindBy(css = ".replies .msg-body")
   private List<WebElement> lastReplyText;
-
-  public MessageWallThreadPageObject(WebDriver driver) {
-    super(driver);
-  }
+  @FindBy(className = "msg-body")
+  private WebElement messageBody;
 
   public MiniEditorComponentObject triggerMessageArea() {
     while (!driver.findElement(firstMessageWrapperBy).findElement(replyButtonBy).isDisplayed()) {
@@ -33,5 +30,9 @@ public class MessageWallThreadPageObject extends MessageWall {
     wait.forElementVisible(replyBody);
     Assertion.assertEquals(lastReplyEditor.get(lastReplyEditor.size() - 1).getText(), userName);
     Assertion.assertEquals(lastReplyText.get(lastReplyEditor.size() - 1).getText(), message);
+  }
+
+  public String getMessageContents() {
+    return wait.forElementVisible(messageBody).getText();
   }
 }

@@ -1,14 +1,14 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject;
 
-import com.wikia.webdriver.common.contentpatterns.URLsContent;
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.core.configuration.Configuration;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.modalwindows.CreateArticleModalComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.category.CategoryPageObject;
+
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
+
 import java.util.List;
 
 public class PortableInfobox extends BasePageObject {
@@ -44,13 +44,10 @@ public class PortableInfobox extends BasePageObject {
   private WebElement referenceElements;
 
   @FindBy(css = ".pi-data-label")
-  private WebElement h3Elements;
+  private List<WebElement> h3Elements;
 
-  @FindBy(css = ".pi-data-value .newcategory")
+  @FindBy(css = ".newcategory")
   private WebElement categoryLinkInInfobox;
-
-  @FindBy(css = ".pi-navigation")
-  private WebElement navigation;
 
   @FindBy(css = ".pi-image")
   private List<WebElement> imagesWrappers;
@@ -64,11 +61,11 @@ public class PortableInfobox extends BasePageObject {
   @FindBy(css = ".poem")
   private List<WebElement> internalLinksInsidePoemTag;
 
-  @FindBy(css = ".poem a[href*='redlink']")
+  @FindBy(css = ".poem a[title='Redlink89328932 (page does not exist)']")
   private List<WebElement> externalLinksInsidePoemTag;
 
-  @FindBy(css = ".poem .external")
-  private List<WebElement> navigationElements;
+  @FindBy(css = ".pi-navigation")
+  private List<WebElement> navigation;
 
   @FindBy(css = ".pi-header")
   private List<WebElement> groupHeadersWrappers;
@@ -76,7 +73,7 @@ public class PortableInfobox extends BasePageObject {
   @FindBy(css = "#articleCategories .category a")
   private List<WebElement> categories;
 
-  @FindBy(css = ".pi-navigation a[href*='redlink']")
+  @FindBy(css = "a[title='Redlink89328932 (page does not exist)']")
   private List<WebElement> redLinks;
 
   @FindBy(css = ".pi-item .external")
@@ -139,10 +136,6 @@ public class PortableInfobox extends BasePageObject {
     return getLinkRedirectTitle(internalLinks.get(index));
   }
 
-  public WebElement getNavigationElements(int index) {
-    return navigationElements.get(index);
-  }
-
   public WebElement getGroupHeader(int index) {
     return groupHeadersWrappers.get(index);
   }
@@ -154,10 +147,10 @@ public class PortableInfobox extends BasePageObject {
     return selectedTitle.getText();
   }
 
-  public String getUrlAfterPageIsLoaded() {
-    wait.forElementVisible(bodyElement);
+  public PortableInfobox waitForUrlToContain(String target) {
+    this.waitForStringInURL(target);
 
-    return driver.getCurrentUrl();
+    return this;
   }
 
   public String getCategoryLinkName() {
@@ -169,7 +162,7 @@ public class PortableInfobox extends BasePageObject {
   public String getDataImageName() {
     wait.forElementVisible(imageTag);
 
-    return imageTag.getAttribute("data-image-name");
+    return imageTag.getAttribute("data-image-key");
   }
 
   public PortableInfobox clickLink(WebElement element) {
@@ -206,19 +199,18 @@ public class PortableInfobox extends BasePageObject {
     wait.forElementVisible(categoryLinkInInfobox);
     scrollAndClick(categoryLinkInInfobox);
 
-    return new CategoryPageObject(driver);
+    return new CategoryPageObject();
   }
 
   public CategoryPageObject clickCategoryWithIndex(int index) {
     wait.forElementVisible(categories.get(index));
     scrollAndClick(categories.get(index));
 
-    return new CategoryPageObject(driver);
+    return new CategoryPageObject();
   }
 
   public PortableInfobox open(String articleTitle) {
-    getUrl(urlBuilder.getUrlForWiki(Configuration.getWikiName()) +
-           URLsContent.WIKI_DIR + articleTitle);
+    getUrl(urlBuilder.getUrlForWikiPage(articleTitle));
 
     return this;
   }
@@ -251,7 +243,7 @@ public class PortableInfobox extends BasePageObject {
     try {
       return element.isDisplayed();
     } catch (NoSuchElementException e) {
-      PageObjectLogging.logInfo(e.getMessage());
+      Log.info(e.getMessage());
       return false;
     }
   }
@@ -275,12 +267,16 @@ public class PortableInfobox extends BasePageObject {
     return isElementVisible(title);
   }
 
+  public String getInfoboxTitle() {
+    return title.getText();
+  }
+
   public boolean isLightboxVisible() {
     return isElementVisible(lightbox);
   }
 
-  public boolean isInfoboxNavigationElementVisible() {
-    return isElementVisible(navigation);
+  public boolean isInfoboxNavigationElementVisible(int index) {
+    return isElementVisible(navigation.get(index));
   }
 
   public int getInternalNavigationLinksNumber() {
@@ -292,9 +288,14 @@ public class PortableInfobox extends BasePageObject {
   }
 
   public boolean areQuotationMarksPresented() {
-    wait.forElementVisible(h3Elements);
-
-    return h3Elements.getText().contains("\"URL\"");
+    boolean questionMarkPresented = false;
+    for (int i = 0; i < h3Elements.size(); i++) {
+      wait.forElementVisible(h3Elements.get(i));
+      if (h3Elements.get(i).getText().contains("?")) {
+        questionMarkPresented = true;
+      }
+    }
+    return questionMarkPresented;
   }
 
   public int getBoldElementsNumber() {
@@ -314,12 +315,6 @@ public class PortableInfobox extends BasePageObject {
 
   public boolean isReferenceElementVisible() {
     return isElementVisible(referenceElements);
-  }
-
-  public boolean isNavigationPaddingLeftAndRightEqual(int index) {
-    String left = getNavigationElements(index).getCssValue("padding-left");
-    String right = getNavigationElements(index).getCssValue("padding-right");
-    return left.equalsIgnoreCase(right);
   }
 
   public boolean isHeaderPaddingLeftAndRightEqual(int index) {

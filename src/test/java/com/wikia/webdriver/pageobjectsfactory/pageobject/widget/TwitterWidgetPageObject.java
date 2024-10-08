@@ -1,6 +1,5 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.widget;
 
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
@@ -8,6 +7,20 @@ import java.util.List;
 
 public class TwitterWidgetPageObject extends WidgetPageObject {
 
+  private static final String TAG_NAME = "twitter";
+  private static final String[] TAGS = {
+      //twitter.com/TwitterDev
+      "<twitter screen-name=\"TwitterDev\" />",
+
+      //twitter.com/Nukapedia
+      "<twitter screen-name=\"nukapedia\" />",
+
+      //twitter.com/Nukapedia overridden to getFANDOM
+      "<twitter screen-name=\"nukapedia\" screen-name=\"getFANDOM\" />",};
+  private static final String INCORRECT_TAG = "<twitter />";
+  private static final String
+      ERROR_MESSAGE
+      = "Error: No Twitter Widget ID provided. Please see Help:Social media integration.";
   @FindBy(css = ".widget-twitter")
   private List<WebElement> widgetWrapperList;
   @FindBy(css = ".widget-twitter iframe")
@@ -15,34 +28,15 @@ public class TwitterWidgetPageObject extends WidgetPageObject {
   @FindBy(css = "div.timeline-Widget")
   private WebElement widgetBody;
 
-  private static final String TAG_NAME = "twitter";
-  private static final String[] TAGS = {
-      //twitter.com/Wikia
-      "<twitter widget-id=\"345311016592228352\" />",
-
-      //twitter.com/Nukapedia
-      "<twitter widget-id=\"430155638820200448\" />",
-
-      //twitter.com/Nukapedia overridden to SFBART
-      "<twitter widget-id=\"430155638820200448\" screen-name=\"sfbart\" />",
-  };
-  private static final String INCORRECT_TAG = "<twitter />";
-  private static final String ERROR_MESSAGE =
-      "Error: No Twitter Widget ID provided. Please see Help:Social media integration.";
-
-  public TwitterWidgetPageObject(WebDriver driver) {
-    super(driver);
-  }
-
   protected String getTagName() {
     return TAG_NAME;
   }
 
-  public String getTag() {
+  public String getSingleTag() {
     return TAGS[0];
   }
 
-  protected String[] getTags() {
+  protected String[] getMultipleTags() {
     return TAGS;
   }
 

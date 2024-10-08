@@ -1,20 +1,17 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.vet;
 
 import com.wikia.webdriver.common.core.Assertion;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.componentobject.modalwindows.AddMediaModalComponentObject;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.wikipage.editmode.WikiArticleEditMode;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
 
 public class VetOptionsComponentObject extends AddMediaModalComponentObject {
 
+  private static final int VIDEO_THUMBNAIL_WIDTH = 350;
   @FindBy(css = "#VideoEmbedLayoutRow")
   private WebElement videoEmbedLayotRow;
   @FindBy(css = "#VideoEmbedCaption")
@@ -40,10 +37,8 @@ public class VetOptionsComponentObject extends AddMediaModalComponentObject {
   @FindBy(css = "div#VideoEmbedNameRow p")
   private WebElement videoNameCaption;
 
-  private static final int VIDEO_THUMBNAIL_WIDTH = 350;
-
   public VetOptionsComponentObject(WebDriver driver) {
-    super(driver);
+    super();
     PageFactory.initElements(driver, this);
   }
 
@@ -55,7 +50,7 @@ public class VetOptionsComponentObject extends AddMediaModalComponentObject {
     wait.forElementVisible(captionField);
     captionField.clear();
     captionField.sendKeys(caption);
-    PageObjectLogging.log("setCaption", "caption was set to: " + caption, true);
+    Log.log("setCaption", "caption was set to: " + caption, true);
 
     return this;
   }
@@ -65,19 +60,19 @@ public class VetOptionsComponentObject extends AddMediaModalComponentObject {
     wait.forElementVisible(widthInputField);
     widthInputField.clear();
     widthInputField.sendKeys(widthString);
-    PageObjectLogging.log("adjustWith", "width set to: " + width, true, driver);
+    Log.log("adjustWith", "width set to: " + width, true, driver);
   }
 
   private void clickAddaVideo() {
     wait.forElementClickable(addAvideo);
     scrollAndClick(addAvideo);
-    PageObjectLogging.log("clickAddaVideo", "add video button clicked", true, driver);
+    Log.log("clickAddaVideo", "add video button clicked", true, driver);
   }
 
   private void clickRetunToEditing() {
     wait.forElementVisible(returnToEditing);
     scrollAndClick(returnToEditing);
-    PageObjectLogging.log("clickReturnToEditing", "return to editing button clicked", true, driver);
+    Log.log("clickReturnToEditing", "return to editing button clicked", true, driver);
   }
 
   private void verifyVideoThumbnail() {
@@ -85,7 +80,7 @@ public class VetOptionsComponentObject extends AddMediaModalComponentObject {
     Dimension dim = videoThumbnail.getSize();
     int w = dim.getWidth();
     Assertion.assertEquals(w, VIDEO_THUMBNAIL_WIDTH);
-    PageObjectLogging.log("verifyVideoThumbnail", "video thumbnail is visible", true);
+    Log.log("verifyVideoThumbnail", "video thumbnail is visible", true);
   }
 
   private void verifyVideoModalNotVisible() {
@@ -121,13 +116,12 @@ public class VetOptionsComponentObject extends AddMediaModalComponentObject {
       default:
         throw new NoSuchElementException("Non-existing position selected");
     }
-    PageObjectLogging.log("adjustPosition", "position " + position.toString() + " selected", true);
+    Log.log("adjustPosition", "position " + position.toString() + " selected", true);
   }
 
   public void verifyVideoAlignmentSelected(PositionsVideo positions) {
     wait.forElementVisible(videoEmbedLayotRow);
-    String selectedPositionId = videoEmbedLayotRow
-        .findElement(By.cssSelector(".selected"))
+    String selectedPositionId = videoEmbedLayotRow.findElement(By.cssSelector(".selected"))
         .getAttribute("id");
     String desiredPositionId;
     switch (positions) {
@@ -159,6 +153,6 @@ public class VetOptionsComponentObject extends AddMediaModalComponentObject {
 
   public void verifyNameNotEditable() {
     Assertion.assertTrue(!uneditableVideoNameField.isDisplayed());
-    PageObjectLogging.log("verifyNameNotEditable", "video name field not editable", true);
+    Log.log("verifyNameNotEditable", "video name field not editable", true);
   }
 }

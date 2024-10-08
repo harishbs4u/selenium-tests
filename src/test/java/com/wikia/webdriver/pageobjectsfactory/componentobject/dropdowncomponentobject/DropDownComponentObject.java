@@ -1,13 +1,9 @@
 package com.wikia.webdriver.pageobjectsfactory.componentobject.dropdowncomponentobject;
 
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -36,20 +32,21 @@ public class DropDownComponentObject extends WikiBasePageObject {
       new WebDriverWait(driver, 20, 2000).until(new ExpectedCondition<Boolean>() {
         @Override
         public Boolean apply(WebDriver webDriver) {
-          if (!driver.findElement(By.cssSelector(LOGIN_DROPDOWN_TRIGGER_CSS)).getAttribute("class")
-                  .contains("active")) {
-            ((JavascriptExecutor) driver)
-                    .executeScript("$j('.ajaxLogin .avatar-container').trigger('click')");
+          if (!driver.findElement(By.cssSelector(LOGIN_DROPDOWN_TRIGGER_CSS))
+              .getAttribute("class")
+              .contains("active")) {
+            ((JavascriptExecutor) driver).executeScript(
+                "$j('.ajaxLogin .avatar-container').trigger('click')");
             return false;
           }
           return true;
         }
       });
     } finally {
-      restoreDeaultImplicitWait();
+      restoreDefaultImplicitWait();
     }
 
-    PageObjectLogging.log("DropdownVisible", "Login dropdown is visible", true, driver);
+    Log.log("DropdownVisible", "Login dropdown is visible", true, driver);
 
     return this;
   }
@@ -57,10 +54,10 @@ public class DropDownComponentObject extends WikiBasePageObject {
   public DropDownComponentObject openDropDownWithEntryPoint(final WebElement entryPoint) {
     try {
       wait.forElementClickable(entryPoint);
-      PageObjectLogging.log("DropdownClickable", "Dropdown is clickable", true, driver);
+      Log.log("DropdownClickable", "Dropdown is clickable", true, driver);
       entryPoint.click();
     } catch (NoSuchElementException e) {
-      PageObjectLogging.log("DropdownClickable", "Dropdown is not clickable", false, driver);
+      Log.log("DropdownClickable", "Dropdown is not clickable", false, driver);
     }
 
     return this;

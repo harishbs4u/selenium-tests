@@ -1,5 +1,7 @@
 package com.wikia.webdriver.common.core.video;
 
+import com.wikia.webdriver.common.core.url.UrlBuilder;
+
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 
@@ -7,8 +9,12 @@ import java.util.Map;
 
 public class YoutubeVideo implements Video {
 
-  private static final ImmutableMap<String, String> TITLE_SPECIAL_CHARS_TO_REPLACE_WITH_SPACE =
-      new ImmutableMap.Builder<String, String>().put("/", " ").put("#", " ").put(":", " ").build();
+  private static final ImmutableMap<String, String>
+      TITLE_SPECIAL_CHARS_TO_REPLACE_WITH_SPACE
+      = new ImmutableMap.Builder<String, String>().put("/", " ")
+      .put("#", " ")
+      .put(":", " ")
+      .build();
 
   private final String url;
   private final String title;
@@ -19,7 +25,7 @@ public class YoutubeVideo implements Video {
     this.url = url;
     this.title = capitaliseFirstWord(escapeSpecialCharactersAndReduceSpacesFromTitle(title));
 
-    this.fileName = transformTitleToFileName(this.title);
+    this.fileName = UrlBuilder.createUrlBuilder().normalizePageName(this.title);
     this.videoID = videoId;
   }
 
@@ -29,14 +35,14 @@ public class YoutubeVideo implements Video {
     for (Map.Entry<String, String> entry : TITLE_SPECIAL_CHARS_TO_REPLACE_WITH_SPACE.entrySet()) {
       titleAfterEscape = titleAfterEscape.replace(entry.getKey(), entry.getValue());
     }
-    titleAfterEscape =
-        titleAfterEscape
-            .replaceAll(
-                "[^ %!\"$&'()*,\\-./0-9:;=?@A-Z\\\\^_`a-z~\\x80-\\xFF+]|%[0-9A-Fa-f]{2}|&[A-Za-z0-9\\x80-\\xff]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;/S",
-                "");
+    titleAfterEscape = titleAfterEscape.replaceAll(
+        "[^ %!\"$&'()*,\\-./0-9:;=?@A-Z\\\\^_`a-z~\\x80-\\xFF+]|%[0-9A-Fa-f]{2}|&[A-Za-z0-9\\x80-\\xff]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;/S",
+        ""
+    );
 
-    titleAfterEscape =
-        titleAfterEscape.replaceAll("^\\s+", "").replaceAll("$\\s+", "").replaceAll("\\s+", " ");
+    titleAfterEscape = titleAfterEscape.replaceAll("^\\s+", "")
+        .replaceAll("$\\s+", "")
+        .replaceAll("\\s+", " ");
 
     return titleAfterEscape;
   }
@@ -59,10 +65,6 @@ public class YoutubeVideo implements Video {
   @Override
   public String getFileName() {
     return this.fileName;
-  }
-
-  private String transformTitleToFileName(String title) {
-    return title.replace(" ", "_");
   }
 
   private String capitaliseFirstWord(String title) {

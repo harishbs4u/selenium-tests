@@ -1,19 +1,19 @@
 package com.wikia.webdriver.common.core.drivers;
 
 import com.wikia.webdriver.common.core.WikiaWebDriver;
-import com.wikia.webdriver.common.core.drivers.browsers.AndroidBrowser;
-import com.wikia.webdriver.common.core.drivers.browsers.ChromeBrowser;
-import com.wikia.webdriver.common.core.drivers.browsers.DefaultBrowser;
-import com.wikia.webdriver.common.core.drivers.browsers.FirefoxBrowser;
-import com.wikia.webdriver.common.core.drivers.browsers.GhostBrowser;
-import com.wikia.webdriver.common.core.drivers.browsers.HtmlUnitBrowser;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.core.drivers.browsers.*;
+import com.wikia.webdriver.common.logging.Log;
 
 public enum Browser {
-  CHROME(ChromeBrowser.class, "CHROME"), FIREFOX(FirefoxBrowser.class, "FF"), CHROME_MOBILE(
-      ChromeBrowser.class, "CHROMEMOBILEMERCURY"), HTMLUNIT(HtmlUnitBrowser.class,
-          "HTMLUNIT"), GHOST(GhostBrowser.class, "GHOST"), CHROME_ANDROID(AndroidBrowser.class,
-              "ANDROID"), DEFAULT(DefaultBrowser.class, "");
+  CHROME(ChromeBrowser.class, "CHROME"), FIREFOX(FirefoxBrowser.class, "FF"), CHROME_MOBILE(ChromeBrowser.class,
+                                                                                            "CHROMEMOBILEMERCURY"
+  ), HTMLUNIT(
+      HtmlUnitBrowser.class,
+      "HTMLUNIT"
+  ), GHOST(GhostBrowser.class, "GHOST"), CHROME_ANDROID(AndroidBrowser.class, "ANDROID"), DEFAULT(
+      DefaultBrowser.class,
+      ""
+  );
 
   private Class<? extends BrowserAbstract> browserClass;
   private String name;
@@ -40,7 +40,7 @@ public enum Browser {
     try {
       return browserClass.newInstance().getInstance();
     } catch (InstantiationException | IllegalAccessException e) {
-      PageObjectLogging.logError("Could not initialize the browser", e);
+      Log.logError("Could not initialize the browser", e);
     }
     return null;
   }

@@ -1,9 +1,9 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.special.galleryboxes;
 
-import lombok.Getter;
-
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
+
+import lombok.Getter;
 
 public final class SpecialUncategorizedFilesPage extends WikiBasePageObject {
 
@@ -13,9 +13,8 @@ public final class SpecialUncategorizedFilesPage extends WikiBasePageObject {
   private final GalleryGrid galleryGrid = new GalleryGrid();
 
   public SpecialUncategorizedFilesPage open() {
-    getUrl(urlBuilder.getUrlForPath(SPECIAL_UNCATEGORIZED_FILES_PATH));
-    PageObjectLogging.log("Special Uncategorized Files Page",
-        SPECIAL_UNCATEGORIZED_FILES_PATH + " opened", true);
+    getUrl(urlBuilder.getUrlForWikiPage(SPECIAL_UNCATEGORIZED_FILES_PATH));
+    Log.log("Special Uncategorized Files Page", SPECIAL_UNCATEGORIZED_FILES_PATH + " opened", true);
 
     return this;
   }

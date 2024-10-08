@@ -1,9 +1,9 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.special.galleryboxes;
 
-import lombok.Getter;
-
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
+
+import lombok.Getter;
 
 public final class SpecialUnusedFilesPage extends WikiBasePageObject {
 
@@ -13,8 +13,8 @@ public final class SpecialUnusedFilesPage extends WikiBasePageObject {
   private final GalleryGrid galleryGrid = new GalleryGrid();
 
   public SpecialUnusedFilesPage open() {
-    getUrl(urlBuilder.getUrlForPath(SPECIAL_UNUSED_FILES_PATH));
-    PageObjectLogging.log("Special Unused Files Page", SPECIAL_UNUSED_FILES_PATH + " opened", true);
+    getUrl(urlBuilder.getUrlForWikiPage(SPECIAL_UNUSED_FILES_PATH));
+    Log.log("Special Unused Files Page", SPECIAL_UNUSED_FILES_PATH + " opened", true);
 
     return this;
   }

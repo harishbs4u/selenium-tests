@@ -1,10 +1,12 @@
 package com.wikia.webdriver.common.core;
 
 import com.wikia.webdriver.common.core.configuration.Configuration;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.XMLConfiguration;
+import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration2.ex.ConfigurationRuntimeException;
+import org.apache.commons.configuration2.XMLConfiguration;
+import org.apache.commons.configuration2.builder.FileBasedConfigurationBuilder;
+import org.apache.commons.configuration2.builder.fluent.Parameters;
 
 import java.io.File;
 
@@ -21,13 +23,18 @@ public class XMLReader {
    */
   public static String getValue(File file, String key) {
 
-    try {
-      XMLConfiguration xml = new XMLConfiguration(file);
-      return xml.getString(key);
-    } catch (ConfigurationException e) {
-      PageObjectLogging.log("Error while reading XML config", e, false);
+    if (!file.exists() || file.isDirectory()) {
+      throw new ConfigurationRuntimeException("Cannot find a file with credentials");
+    }
 
-      return e.getMessage();
+    try {
+      Parameters params = new Parameters();
+      FileBasedConfigurationBuilder<XMLConfiguration> builder =
+              new FileBasedConfigurationBuilder<>(XMLConfiguration.class).configure(params.fileBased().setFile(file));
+      org.apache.commons.configuration2.Configuration config = builder.getConfiguration();
+      return config.getString(key);
+    } catch (ConfigurationException e) {
+      throw new ConfigurationRuntimeException(e);
     }
   }
 

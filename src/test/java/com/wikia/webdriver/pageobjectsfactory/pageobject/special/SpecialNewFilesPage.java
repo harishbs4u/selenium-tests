@@ -1,27 +1,29 @@
 package com.wikia.webdriver.pageobjectsfactory.pageobject.special;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import com.wikia.webdriver.common.contentpatterns.PageContent;
+import com.wikia.webdriver.common.contentpatterns.URLsContent;
+import com.wikia.webdriver.common.core.CommonUtils;
+import com.wikia.webdriver.common.logging.Log;
+import com.wikia.webdriver.pageobjectsfactory.componentobject.lightbox.LightboxComponentObject;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.special.filepage.FilePage;
+import com.wikia.webdriver.pageobjectsfactory.pageobject.special.watch.WatchPageObject;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.FindBys;
 
-import com.wikia.webdriver.common.contentpatterns.PageContent;
-import com.wikia.webdriver.common.contentpatterns.URLsContent;
-import com.wikia.webdriver.common.core.CommonUtils;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
-import com.wikia.webdriver.pageobjectsfactory.componentobject.lightbox.LightboxComponentObject;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.filepage.FilePage;
-import com.wikia.webdriver.pageobjectsfactory.pageobject.special.watch.WatchPageObject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class SpecialNewFilesPage extends SpecialPageObject {
 
   private static final String NEW_FILES_SPECIAL_PAGE_TITLE = "Images";
+  private static final By mwContentTextImgBy = By.cssSelector("#mw-content-text img");
 
-  @FindBy(css = "a.upphotos[title*='Add a photo']")
+  @FindBy(css = "#page-header-add-new-photo")
   private WebElement addPhotoButton;
   @FindBy(css = "input[name='wpUploadFile']")
   private WebElement browseForFileInput;
@@ -42,14 +44,14 @@ public class SpecialNewFilesPage extends SpecialPageObject {
 
   public SpecialNewFilesPage addPhoto() {
     scrollAndClick(addPhotoButton);
-    PageObjectLogging.log("ClickAddPhotoButton", "Add photo button clicked", true);
+    Log.log("ClickAddPhotoButton", "Add photo button clicked", true);
 
     return this;
   }
 
   public SpecialNewFilesPage clickUploadButton() {
     scrollAndClick(uploadFileInput);
-    PageObjectLogging.log("ClickOnUploadaPhoto", "Click on upload a photo button", true);
+    Log.log("ClickOnUploadaPhoto", "Click on upload a photo button", true);
 
     return this;
   }
@@ -62,36 +64,36 @@ public class SpecialNewFilesPage extends SpecialPageObject {
   }
 
   public SpecialNewFilesPage clickOnMoreOptions() {
-    moreOrFewerOptions.click();
+    jsActions.click(moreOrFewerOptions);
     waitForValueToBePresentInElementsCssByCss("div.options", "display", "block");
-    PageObjectLogging.log("ClickOnMoreOptions", "Click on More options", true);
+    Log.log("ClickOnMoreOptions", "Click on More options", true);
 
     return this;
   }
 
   public SpecialNewFilesPage clickOnFewerOptions() {
-    moreOrFewerOptions.click();
+    jsActions.click(moreOrFewerOptions);
     waitForValueToBePresentInElementsCssByCss("div.options", "display", "none");
-    PageObjectLogging.log("ClickOnFewerOptions", "Click on Fewer options", true);
+    Log.log("ClickOnFewerOptions", "Click on Fewer options", true);
 
     return this;
   }
 
   public SpecialNewFilesPage checkIgnoreAnyWarnings() {
     wait.forElementVisible(ignoreAnyWarnings);
-    ignoreAnyWarnings.click();
-    PageObjectLogging.log("CheckIgnoreAnyWarnings", "Check 'Ignore Any Warnings' option", true);
+    scrollAndClick(ignoreAnyWarnings);
+    Log.log("CheckIgnoreAnyWarnings", "Check 'Ignore Any Warnings' option", true);
 
     return this;
   }
 
   public SpecialNewFilesPage selectFileToUpload(String file) {
-    browseForFileInput.sendKeys(
-        CommonUtils.getAbsolutePathForFile(PageContent.IMAGE_UPLOAD_RESOURCES_PATH + file));
+    browseForFileInput.sendKeys(CommonUtils.getAbsolutePathForFile(
+        PageContent.IMAGE_UPLOAD_RESOURCES_PATH + file));
 
     waitForValueToBePresentInElementsCssByCss("div.status", "display", "block");
 
-    PageObjectLogging.log("typeInFileToUploadPath", "type file " + file + " to upload it", true);
+    Log.log("typeInFileToUploadPath", "type file " + file + " to upload it", true);
 
     return this;
   }
@@ -100,12 +102,30 @@ public class SpecialNewFilesPage extends SpecialPageObject {
     try {
       Thread.sleep(2000);
     } catch (InterruptedException e) {
-      PageObjectLogging.log("SLEEP INTERRUPTED", e, false);
+      Log.log("SLEEP INTERRUPTED", e, false);
     }
     driver.navigate().refresh();
     waitForValueToBePresentInElementsAttributeByElement(latestWikiaPreviewImg, "src", fileName);
-    PageObjectLogging.log("waitForFile",
-        "Verify if " + fileName + " has been successfully uploaded", true);
+    Log.log("waitForFile", "Verify if " + fileName + " has been successfully uploaded", true);
+  }
+
+  public Boolean isImageOnPage(String fileName) {
+    wait.forElementVisible(mwContentTextImgBy);
+    for (int i = 0; i < 2; i++) {
+      for (WebElement image : imagesNewFiles) {
+        if (image.getAttribute("src").contains(fileName)) {
+          return true;
+        }
+      }
+      try {
+        Thread.sleep(5000);
+      } catch (InterruptedException e) {
+        Log.info("Sleep interrupted");
+      }
+      driver.navigate().refresh();
+    }
+
+    return false;
   }
 
   /**
@@ -131,7 +151,7 @@ public class SpecialNewFilesPage extends SpecialPageObject {
   }
 
   /**
-   * @param imageName eg. test.png. This file should be visible on Special:NewFiles
+   * @param imageName  eg. test.png. This file should be visible on Special:NewFiles
    * @param noRedirect if true, ?redirect=no is added to current url
    * @return new file page object of file specified in imageName parameter
    */
@@ -148,9 +168,10 @@ public class SpecialNewFilesPage extends SpecialPageObject {
   public WatchPageObject unfollowImage(String wikiURL, String imageName) {
     String url = urlBuilder.appendQueryStringToURL(
         wikiURL + URLsContent.WIKI_DIR + URLsContent.FILE_NAMESPACE + imageName,
-        URLsContent.ACTION_UNFOLLOW);
+        URLsContent.ACTION_UNFOLLOW
+    );
     getUrl(url);
-    return new WatchPageObject(driver);
+    return new WatchPageObject();
   }
 
   public LightboxComponentObject openLightbox(int itemNumber) {
@@ -168,7 +189,7 @@ public class SpecialNewFilesPage extends SpecialPageObject {
     return this;
   }
 
-  public String getTitle(){
+  public String getTitle() {
     return NEW_FILES_SPECIAL_PAGE_TITLE;
   }
 }

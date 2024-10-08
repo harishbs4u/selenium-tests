@@ -2,10 +2,9 @@ package com.wikia.webdriver.pageobjectsfactory.pageobject.widget;
 
 import com.wikia.webdriver.common.contentpatterns.MercuryMessages;
 import com.wikia.webdriver.common.core.api.ArticleContent;
-import com.wikia.webdriver.common.logging.PageObjectLogging;
+import com.wikia.webdriver.common.logging.Log;
 import com.wikia.webdriver.pageobjectsfactory.pageobject.WikiBasePageObject;
 
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 
@@ -16,18 +15,14 @@ public abstract class WidgetPageObject extends WikiBasePageObject {
   @FindBy(css = "strong.error")
   protected WebElement error;
 
-  protected WidgetPageObject(WebDriver driver) {
-    super();
-  }
-
   protected abstract String getTagName();
 
-  public abstract String getTag();
+  public abstract String getSingleTag();
 
   /**
    * Get all tags defined in the widget page object
    */
-  protected abstract String[] getTags();
+  protected abstract String[] getMultipleTags();
 
   protected abstract String getIncorrectTag();
 
@@ -41,7 +36,7 @@ public abstract class WidgetPageObject extends WikiBasePageObject {
 
   public WidgetPageObject create(String articleName) {
     ArticleContent articleContent = new ArticleContent();
-    articleContent.push(getTag(), articleName);
+    articleContent.push(getSingleTag(), articleName);
     return this;
   }
 
@@ -54,7 +49,7 @@ public abstract class WidgetPageObject extends WikiBasePageObject {
 
     articleContent.clear(articleName);
 
-    for (String tag : getTags()) {
+    for (String tag : getMultipleTags()) {
       text += tag + "\n";
     }
 
@@ -84,7 +79,7 @@ public abstract class WidgetPageObject extends WikiBasePageObject {
 
   public boolean areAllValidSwappedForIFrames() {
     boolean result = getWidgetWrapperList().size() == getWidgetIFrameList().size();
-    PageObjectLogging.log(getTagName(), MercuryMessages.ALL_VALID_WIDGETS_ARE_SWAPPED_MSG, result);
+    Log.log(getTagName(), MercuryMessages.ALL_VALID_WIDGETS_ARE_SWAPPED_MSG, result);
     return result;
   }
 
@@ -93,31 +88,32 @@ public abstract class WidgetPageObject extends WikiBasePageObject {
    */
   public boolean areLoaded() {
     boolean result = true;
-    String[] tags = getTags();
+    String[] tags = getMultipleTags();
     for (int i = 0; i < tags.length; i++) {
       if (!isWidgetVisible(i)) {
         result = false;
-        PageObjectLogging.log(getTagName() + " #" + i, MercuryMessages.INVISIBLE_MSG, result);
+        Log.log(getTagName() + " #" + i, MercuryMessages.INVISIBLE_MSG, result);
         return result;
       }
-      PageObjectLogging.log(getTagName() + " #" + i, MercuryMessages.VISIBLE_MSG, result);
+      Log.log(getTagName() + " #" + i, MercuryMessages.VISIBLE_MSG, result);
     }
-    PageObjectLogging.log("all " + getTagName() + " widgets", MercuryMessages.VISIBLE_MSG, result);
+    Log.log("all " + getTagName() + " widgets", MercuryMessages.VISIBLE_MSG, result);
     return result;
   }
 
   public boolean isErrorPresent() {
     wait.forElementVisible(error);
-    boolean result =  error.getText().equals(getErrorMessage());
+    boolean result = error.getText().equals(getErrorMessage());
     logVisibility(result);
 
     return result;
   }
 
   protected void logVisibility(boolean result) {
-    PageObjectLogging
-        .log(getTagName(), result ? MercuryMessages.VISIBLE_MSG : MercuryMessages.INVISIBLE_MSG,
-             result);
+    Log.log(getTagName(),
+            result ? MercuryMessages.VISIBLE_MSG : MercuryMessages.INVISIBLE_MSG,
+            result
+    );
   }
 
   /**
